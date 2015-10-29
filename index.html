@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang='en'>
+<head>
+	<meta charset='UTF-8'>
+	<title>TEST</title>
+</head>
+<body>
+
+<div id='App'></div>
+
+<script>
+	(function () {
+		var node = document.getElementsByTagName('head').item(0) || document.documentElement;
+		var tag = document.createElement('script');
+		tag.src = '/build/main.js?' + new Date().getTime();
+		node.appendChild(tag);
+	})();
+</script>
+
+</body>
+</html>
