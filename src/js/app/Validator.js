@@ -5,16 +5,20 @@
  *
  */
 
+import _ from 'underscore';
+
 /**
  * validator messages
  *
  * @type {{key:String}}
  */
 const MESSAGES = {
+	notBool: 'value is not bool',
 	required: 'value is required',
 	notInteger: 'value is not integer',
 	notFloat: 'value is not float',
-	notString: 'value is not string'
+	notString: 'value is not string',
+	notPositive: 'value is not positive number'
 };
 
 /**
@@ -31,6 +35,17 @@ class Validator {
 Validator.validators = {};
 
 /**
+ * valus is not boole
+ * return false if check done
+ *
+ * @param value
+ * @returns {(false|{msg:String})}
+ */
+Validator.validators.boolean = (value) => {
+	return (typeof value === 'boolean') ? false : {msg: MESSAGES.notBool};
+};
+
+/**
  * value is not integer
  * return false if check done
  *
@@ -39,6 +54,17 @@ Validator.validators = {};
  */
 Validator.validators.integer = (value) => {
 	return (typeof value === 'number' && value % 1 === 0) ? false : {msg: MESSAGES.notInteger};
+};
+
+/**
+ * value is not positive number
+ * return false if check done
+ *
+ * @param value
+ * @returns {*}
+ */
+Validator.validators.positive = (value) => {
+	return (typeof value === 'number' && value > 0) ? false : {msg: MESSAGES.notPositive}
 };
 
 /**
@@ -82,11 +108,19 @@ Validator.validators.required = (value) => {
  * @param {String} validatorName
  * @returns {(false|{error})}
  */
-Validator.check = function(value, validatorName) {
+Validator.checkError = (value, validatorName) => {
 	if (!Validator.validators[validatorName]) {
 		throw 'validator [' + validatorName + '] not found';
 	}
 	return Validator.validators[validatorName](value);
+};
+
+Validator.checkErrors = (value, validatorNamesList) => {
+	var errors = _.compact(_.map(validatorNamesList.slice(0), function (validatorName) {
+		return Validator.checkError(value, validatorName);
+	}));
+
+	return errors.length ? errors : false;
 };
 
 module.exports = Validator

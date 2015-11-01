@@ -47,6 +47,8 @@ module.exports = {
 		extensions: ['', '.json', '.js', '.jsx'],
 
 		alias: {
+			app: path.join(coreDir, './src/js/app'),
+			extensions: path.join(coreDir, './src/js/extensions')
 		}
 	},
 
