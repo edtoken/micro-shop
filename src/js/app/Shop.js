@@ -209,14 +209,21 @@ export class MainProduct extends Product {
 		super(data, options);
 
 		// массив ID upsellProducts
-		this.upsellSpecification = {};
+		this.upsellSpecification = [];
 		return this;
 	}
 
-	addUpsellSpecification(upsellProduct) {
-		if (!this.upsellSpecification[upsellProduct.id]) {
-			this.upsellSpecification[upsellProduct.id] = upsellProduct;
+	addSpecification(upsellProduct) {
+		if (this.upsellSpecification.indexOf(upsellProduct) < 0) {
+			this.upsellSpecification.push(upsellProduct.id);
 		}
+		//if (!this.upsellSpecification[upsellProduct.id]) {
+		//	this.upsellSpecification[upsellProduct.id] = upsellProduct;
+		//}
+	}
+
+	getSpecifications() {
+		return this.upsellSpecification;
 	}
 }
 
@@ -262,11 +269,11 @@ export class UpsellProduct extends Product {
 		var cart = this.getCart();
 		var totalPrice = cart.getTotalPrice();
 
-		return _.every(specifications, function (spec) {
-			let mainProduct = cart.find({id: spec.mainProduct.id});
+		return _.some(specifications, function (spec) {
+			let mainProduct = cart.get(spec.mainProduct.id);
 			if (!mainProduct) return false;
 			if (totalPrice < spec.totalCartPrice) return false;
-			if (!mainProduct.count < spec.itemsInCart) return false;
+			if (mainProduct.data.quantity < spec.itemsInCart) return false;
 			return true;
 		});
 	}
@@ -276,8 +283,13 @@ class Cart extends Base {
 
 	constructor() {
 		super();
+		// товары в корзине
 		this.items = [];
+		// upsell товары
+		this.upsells = [];
 		this.byId = {};
+
+		this.on('add change remove', this.checkSpecifications, this);
 	}
 
 	find(attrs, first) {
@@ -285,6 +297,10 @@ class Cart extends Base {
 		var find = first ? _.find : _.filter;
 		var match = _.matches(attr);
 		return find(this.items, item => (match(item.model.attributes)));
+	}
+
+	get(id) {
+		return this.byId[id];
 	}
 
 	getTotalPrice() {
@@ -333,13 +349,53 @@ class Cart extends Base {
 		return true;
 	}
 
+	checkSpecifications() {
+
+		var addUpsells = [];
+		var removeUpsells = [];
+		var upsellProducts = {};
+
+		var canAddUpsellItems = _.find(this.find(), function (item) {
+			var upsellIds = item.model.getSpecifications();
+
+			for (var i in upsellIds) {
+				// каждый upsellproduct проверяю только по 1 разу
+				if (upsellProducts[upsellIds[i]]) continue;
+				let upsellProduct = this.getShop().get(upsellIds[i]);
+				let upsellInCart = this.get(upsellProduct.id);
+				let specificationsDone = upsellProduct.checkSpecifications();
+
+				console.log('specificationsDone', specificationsDone);
+
+				// если нет в корзине и возможно добавить - добавить
+				if (!upsellInCart && specificationsDone) {
+					addUpsells.push(upsellProduct);
+				}
+
+				// если есть в корзине и невозможно добавить - удалить
+				if (upsellInCart && !upsellInCart) {
+					removeUpsells.push(upsellProduct);
+				}
+			}
+		}, this);
+
+		// удаляю upsell которые не могут находится в корзине
+		if (removeUpsells.length) {
+			for (var r in removeUpsells) {
+				this.remove(removeUpsells[r].id);
+			}
+		}
+
+		this.trigger('addUpsells', addUpsells);
+	}
+
 	add(product, data, options) {
 		if (!product) return false;
 
 		data = data || {};
 		options = data || {};
 
-		var cartItem = this.find({id: product.id}, true);
+		var cartItem = this.get(product.id);
 
 		if (this._validateAddProduct(product, data)) {
 
@@ -352,6 +408,7 @@ class Cart extends Base {
 			}
 
 			alert('Продукт добавлен');
+			this.byId[cartItem.id] = cartItem;
 			this.trigger('add', cartItem);
 			return true;
 		}
@@ -359,10 +416,15 @@ class Cart extends Base {
 		return false;
 	}
 
+	//1) Метод добавления продукта в корзину с указанием quantity.
+	addWidthQuantity(product, quantity, options) {
+		return this.add(product, {quantity: quantity}, options)
+	}
+
 	//3) Метод изменения quantity продукта.
 	changeQuantity(productId, quantity, options) {
 
-		let product = this.find({id: productId}, true);
+		let product = this.get(productId);
 
 		if (product) {
 			if (this._validateChangeProduct(product, {quantity: quantity})) {
@@ -383,14 +445,10 @@ class Cart extends Base {
 		return false;
 	}
 
-	//1) Метод добавления продукта в корзину с указанием quantity.
-	addWidthQuantity(product, quantity, options) {
-		return this.add(product, {quantity: quantity}, options)
-	}
 
 	//2) Метод удаления продукта
 	remove(id, quantity, options) {
-		var product = this.find({id: id}, true);
+		var product = this.get(id);
 		quantity = quantity || 'all';
 
 		if (quantity > product.data.quantity) {
@@ -408,6 +466,7 @@ class Cart extends Base {
 				? ((product.model.inCart = false), this.items.splice(index, 1)[0])
 				: (product.data.quantity -= quantity, quantity);
 
+			delete this.byId[product.id];
 			this.trigger('remove', item);
 			return true;
 		}
@@ -424,8 +483,9 @@ export default class Shop extends Base {
 
 	constructor(data) {
 		super();
+		this.byId = {};
 		// all shop products
-		this.items = data.items;
+		this.reset(data.items);
 		this.cart = new Cart();
 	}
 
@@ -433,11 +493,23 @@ export default class Shop extends Base {
 		return this.cart;
 	}
 
+	reset(items, options) {
+		this.byId = {};
+		this.items = items;
+		for (var i in items) {
+			this.byId[items[i].id] = items[i];
+		}
+	}
+
 	find(attrs, first) {
 		var attr = attrs || {};
 		var find = first ? _.find : _.filter;
 		var match = _.matches(attr);
 		return find(this.items, item => (match(item.attributes)));
+	}
+
+	get(id) {
+		return this.byId[id];
 	}
 
 	getMainProducts() {

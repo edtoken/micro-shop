@@ -43,8 +43,10 @@ const STYLES = {
 			display: 'block',
 			float: 'left',
 			margin: '4px',
-			height: '100px',
-			width: '100px',
+			height: '150px',
+			width: '150px',
+			overflowX: 'auto',
+			overflowY: 'auto'
 		}
 	}
 };
@@ -131,8 +133,8 @@ class ProductItem extends Component {
 	handlerClickRemoveFromCart(e) {
 		e.preventDefault();
 
-		var product = this.getCart().find({id: this.props.model.id}, true);
-		var quantity = this.getCart().find({id: product.model.id}, true)
+		var product = this.getCart().get(this.state.model.id);
+		var quantity = (product)
 			? parseInt(prompt('Введите количество', product.data.quantity))
 			: 1;
 
@@ -148,11 +150,11 @@ class ProductItem extends Component {
 
 	}
 
-	handlerChangeQuantity(e){
+	handlerChangeQuantity(e) {
 		e.preventDefault();
 
-		var product = this.getCart().find({id: this.props.model.id}, true);
-		var quantity = this.getCart().find({id: product.model.id}, true)
+		var product = this.getCart().get(this.state.model.id);
+		var quantity = (product)
 			? parseInt(prompt('Введите количество', product.data.quantity))
 			: 1;
 
@@ -173,12 +175,24 @@ class ProductItem extends Component {
 		let model = this.props.model;
 		let inCart = model.inCart;
 		let upsellProduct = !model.isMainProduct();
+		let renderSpecifications;
+
+		if (upsellProduct) {
+			renderSpecifications = _.map(model.getSpecifications(), function (item, num) {
+				return (<div key={num} style={{fontSize:'10px'}}>
+					<div>main:{item.mainProduct.get('name')}</div>
+					<div>total:{item.totalCartPrice} || inCart:{item.itemsInCart}</div>
+				</div>)
+			});
+		}
 
 		return (<div className='Product' style={STYLES.product.styles}>
 			<span className='Product-title'>{model.get('name')}</span>
 			{upsellProduct && <div>
 				<small style={{color:'red'}}>upsell</small>
 			</div>}
+
+			<div>{renderSpecifications}</div>
 
 			<div>price:{model.get('price')}</div>
 
@@ -230,7 +244,7 @@ class CartView extends Component {
 
 	handlerClickRemove(productId) {
 
-		var product = this.getCart().find({id: productId}, true);
+		var product = this.getCart().get(productId);
 		if (product) {
 
 			var quantity = (product.data.quantity > 1)

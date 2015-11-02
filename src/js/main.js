@@ -146,7 +146,7 @@ var s = new Date();
 			}
 
 			// add link mainProduct -> upsell
-			mainProduct.addUpsellSpecification(upsellProduct);
+			mainProduct.addSpecification(upsellProduct);
 
 			// add link upsell -> mainproduct
 			upsellProduct.addSpecification(mainProduct, upsellProduct, {

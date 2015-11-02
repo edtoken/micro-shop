@@ -174,7 +174,7 @@
 				}
 
 				// add link mainProduct -> upsell
-				mainProduct.addUpsellSpecification(upsellProduct);
+				mainProduct.addSpecification(upsellProduct);
 
 				// add link upsell -> mainproduct
 				upsellProduct.addSpecification(mainProduct, upsellProduct, {
@@ -21566,8 +21566,10 @@
 				display: 'block',
 				float: 'left',
 				margin: '4px',
-				height: '100px',
-				width: '100px'
+				height: '150px',
+				width: '150px',
+				overflowX: 'auto',
+				overflowY: 'auto'
 			}
 		}
 	};
@@ -21690,8 +21692,8 @@
 			value: function handlerClickRemoveFromCart(e) {
 				e.preventDefault();
 
-				var product = this.getCart().find({ id: this.props.model.id }, true);
-				var quantity = this.getCart().find({ id: product.model.id }, true) ? parseInt(prompt('Введите количество', product.data.quantity)) : 1;
+				var product = this.getCart().get(this.state.model.id);
+				var quantity = product ? parseInt(prompt('Введите количество', product.data.quantity)) : 1;
 
 				var errors = _Validator2['default'].checkErrors(quantity, ['required', 'integer', 'positive']);
 
@@ -21708,8 +21710,8 @@
 			value: function handlerChangeQuantity(e) {
 				e.preventDefault();
 
-				var product = this.getCart().find({ id: this.props.model.id }, true);
-				var quantity = this.getCart().find({ id: product.model.id }, true) ? parseInt(prompt('Введите количество', product.data.quantity)) : 1;
+				var product = this.getCart().get(this.state.model.id);
+				var quantity = product ? parseInt(prompt('Введите количество', product.data.quantity)) : 1;
 
 				var errors = _Validator2['default'].checkErrors(quantity, ['required', 'integer', 'positive']);
 
@@ -21728,6 +21730,30 @@
 				var model = this.props.model;
 				var inCart = model.inCart;
 				var upsellProduct = !model.isMainProduct();
+				var renderSpecifications = undefined;
+
+				if (upsellProduct) {
+					renderSpecifications = _underscore2['default'].map(model.getSpecifications(), function (item, num) {
+						return _react2['default'].createElement(
+							'div',
+							{ key: num, style: { fontSize: '10px' } },
+							_react2['default'].createElement(
+								'div',
+								null,
+								'main:',
+								item.mainProduct.get('name')
+							),
+							_react2['default'].createElement(
+								'div',
+								null,
+								'total:',
+								item.totalCartPrice,
+								' || inCart:',
+								item.itemsInCart
+							)
+						);
+					});
+				}
 
 				return _react2['default'].createElement(
 					'div',
@@ -21745,6 +21771,11 @@
 							{ style: { color: 'red' } },
 							'upsell'
 						)
+					),
+					_react2['default'].createElement(
+						'div',
+						null,
+						renderSpecifications
 					),
 					_react2['default'].createElement(
 						'div',
@@ -21831,7 +21862,7 @@
 			key: 'handlerClickRemove',
 			value: function handlerClickRemove(productId) {
 
-				var product = this.getCart().find({ id: productId }, true);
+				var product = this.getCart().get(productId);
 				if (product) {
 
 					var quantity = product.data.quantity > 1 ? parseInt(prompt('Введите количество', product.data.quantity)) : 1;
@@ -22795,7 +22826,7 @@
 			_get(Object.getPrototypeOf(MainProduct.prototype), 'constructor', this).call(this, data, options);
 
 			// массив ID upsellProducts
-			this.upsellSpecification = {};
+			this.upsellSpecification = [];
 			return this;
 		}
 
@@ -22805,11 +22836,19 @@
 	  */
 
 		_createClass(MainProduct, [{
-			key: 'addUpsellSpecification',
-			value: function addUpsellSpecification(upsellProduct) {
-				if (!this.upsellSpecification[upsellProduct.id]) {
-					this.upsellSpecification[upsellProduct.id] = upsellProduct;
+			key: 'addSpecification',
+			value: function addSpecification(upsellProduct) {
+				if (this.upsellSpecification.indexOf(upsellProduct) < 0) {
+					this.upsellSpecification.push(upsellProduct.id);
 				}
+				//if (!this.upsellSpecification[upsellProduct.id]) {
+				//	this.upsellSpecification[upsellProduct.id] = upsellProduct;
+				//}
+			}
+		}, {
+			key: 'getSpecifications',
+			value: function getSpecifications() {
+				return this.upsellSpecification;
 			}
 		}]);
 
@@ -22866,11 +22905,11 @@
 				var cart = this.getCart();
 				var totalPrice = cart.getTotalPrice();
 
-				return _underscore2['default'].every(specifications, function (spec) {
-					var mainProduct = cart.find({ id: spec.mainProduct.id });
+				return _underscore2['default'].some(specifications, function (spec) {
+					var mainProduct = cart.get(spec.mainProduct.id);
 					if (!mainProduct) return false;
 					if (totalPrice < spec.totalCartPrice) return false;
-					if (!mainProduct.count < spec.itemsInCart) return false;
+					if (mainProduct.data.quantity < spec.itemsInCart) return false;
 					return true;
 				});
 			}
@@ -22888,8 +22927,13 @@
 			_classCallCheck(this, Cart);
 
 			_get(Object.getPrototypeOf(Cart.prototype), 'constructor', this).call(this);
+			// товары в корзине
 			this.items = [];
+			// upsell товары
+			this.upsells = [];
 			this.byId = {};
+
+			this.on('add change remove', this.checkSpecifications, this);
 		}
 
 		_createClass(Cart, [{
@@ -22901,6 +22945,11 @@
 				return find(this.items, function (item) {
 					return match(item.model.attributes);
 				});
+			}
+		}, {
+			key: 'get',
+			value: function get(id) {
+				return this.byId[id];
 			}
 		}, {
 			key: 'getTotalPrice',
@@ -22954,6 +23003,47 @@
 				return true;
 			}
 		}, {
+			key: 'checkSpecifications',
+			value: function checkSpecifications() {
+
+				var addUpsells = [];
+				var removeUpsells = [];
+				var upsellProducts = {};
+
+				var canAddUpsellItems = _underscore2['default'].find(this.find(), function (item) {
+					var upsellIds = item.model.getSpecifications();
+
+					for (var i in upsellIds) {
+						// каждый upsellproduct проверяю только по 1 разу
+						if (upsellProducts[upsellIds[i]]) continue;
+						var upsellProduct = this.getShop().get(upsellIds[i]);
+						var upsellInCart = this.get(upsellProduct.id);
+						var specificationsDone = upsellProduct.checkSpecifications();
+
+						console.log('specificationsDone', specificationsDone);
+
+						// если нет в корзине и возможно добавить - добавить
+						if (!upsellInCart && specificationsDone) {
+							addUpsells.push(upsellProduct);
+						}
+
+						// если есть в корзине и невозможно добавить - удалить
+						if (upsellInCart && !upsellInCart) {
+							removeUpsells.push(upsellProduct);
+						}
+					}
+				}, this);
+
+				// удаляю upsell которые не могут находится в корзине
+				if (removeUpsells.length) {
+					for (var r in removeUpsells) {
+						this.remove(removeUpsells[r].id);
+					}
+				}
+
+				this.trigger('addUpsells', addUpsells);
+			}
+		}, {
 			key: 'add',
 			value: function add(product, data, options) {
 				if (!product) return false;
@@ -22961,7 +23051,7 @@
 				data = data || {};
 				options = data || {};
 
-				var cartItem = this.find({ id: product.id }, true);
+				var cartItem = this.get(product.id);
 
 				if (this._validateAddProduct(product, data)) {
 
@@ -22974,6 +23064,7 @@
 					}
 
 					alert('Продукт добавлен');
+					this.byId[cartItem.id] = cartItem;
 					this.trigger('add', cartItem);
 					return true;
 				}
@@ -22981,12 +23072,19 @@
 				return false;
 			}
 
+			//1) Метод добавления продукта в корзину с указанием quantity.
+		}, {
+			key: 'addWidthQuantity',
+			value: function addWidthQuantity(product, quantity, options) {
+				return this.add(product, { quantity: quantity }, options);
+			}
+
 			//3) Метод изменения quantity продукта.
 		}, {
 			key: 'changeQuantity',
 			value: function changeQuantity(productId, quantity, options) {
 
-				var product = this.find({ id: productId }, true);
+				var product = this.get(productId);
 
 				if (product) {
 					if (this._validateChangeProduct(product, { quantity: quantity })) {
@@ -23007,18 +23105,11 @@
 				return false;
 			}
 
-			//1) Метод добавления продукта в корзину с указанием quantity.
-		}, {
-			key: 'addWidthQuantity',
-			value: function addWidthQuantity(product, quantity, options) {
-				return this.add(product, { quantity: quantity }, options);
-			}
-
 			//2) Метод удаления продукта
 		}, {
 			key: 'remove',
 			value: function remove(id, quantity, options) {
-				var product = this.find({ id: id }, true);
+				var product = this.get(id);
 				quantity = quantity || 'all';
 
 				if (quantity > product.data.quantity) {
@@ -23034,6 +23125,7 @@
 					// надо так же установить inCart
 					var item = quantity == 'all' || product.data.quantity === quantity ? (product.model.inCart = false, this.items.splice(index, 1)[0]) : (product.data.quantity -= quantity, quantity);
 
+					delete this.byId[product.id];
 					this.trigger('remove', item);
 					return true;
 				}
@@ -23055,8 +23147,9 @@
 			_classCallCheck(this, Shop);
 
 			_get(Object.getPrototypeOf(Shop.prototype), 'constructor', this).call(this);
+			this.byId = {};
 			// all shop products
-			this.items = data.items;
+			this.reset(data.items);
 			this.cart = new Cart();
 		}
 
@@ -23064,6 +23157,15 @@
 			key: 'getCart',
 			value: function getCart() {
 				return this.cart;
+			}
+		}, {
+			key: 'reset',
+			value: function reset(items, options) {
+				this.byId = {};
+				this.items = items;
+				for (var i in items) {
+					this.byId[items[i].id] = items[i];
+				}
 			}
 		}, {
 			key: 'find',
@@ -23074,6 +23176,11 @@
 				return find(this.items, function (item) {
 					return match(item.attributes);
 				});
+			}
+		}, {
+			key: 'get',
+			value: function get(id) {
+				return this.byId[id];
 			}
 		}, {
 			key: 'getMainProducts',
