@@ -75,8 +75,8 @@
 	var node = document.getElementById('App');
 
 	// количество автосгенерированных продуктов (main)
-	//const MAIN_PRODUCTS_COUNT = 5000;
-	var MAIN_PRODUCTS_COUNT = 50;
+	var MAIN_PRODUCTS_COUNT = 2000;
+	//const MAIN_PRODUCTS_COUNT = 50;
 
 	// возможные mainProducts
 	var mainProductsNames = ['Кеды', 'Кроссовки', 'Футболка', 'Свитшот', 'Джинсы', 'Леггинсы', 'Шорты', 'Платье', 'Сумка', 'Свитер', 'Пайта', 'Майка', 'Кардиган'];

@@ -24,8 +24,8 @@ if (__DEVELOPMENT__) {
 const node = document.getElementById('App');
 
 // количество автосгенерированных продуктов (main)
-//const MAIN_PRODUCTS_COUNT = 5000;
-const MAIN_PRODUCTS_COUNT = 50;
+const MAIN_PRODUCTS_COUNT = 2000;
+//const MAIN_PRODUCTS_COUNT = 50;
 
 // возможные mainProducts
 const mainProductsNames = [
