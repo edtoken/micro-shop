@@ -328,6 +328,7 @@ class Product extends Base {
 			id: null,
 			price: null,
 			stockItems: null,
+			_stockItems: null,
 			name: null
 		};
 	}
@@ -718,7 +719,7 @@ class CartItem extends Base {
 
 		// невозможно добавить столько в корзину
 		// лучше бы перенести эту валидацию в validators
-		if (attr.quantity && this.model.get('stockItems') - attr.quantity < 0) {
+		if (attr.quantity && this.model.get('_stockItems') - attr.quantity < 0) {
 			validationErrors['stockItemsError'] = true;
 			hasNotError = false;
 		}
@@ -759,7 +760,7 @@ class CartItem extends Base {
 		// изменяю количество товаров на складе
 		let modelStockItems = this.model.get('stockItems');
 		let newStockItems = modelStockItems - data.quantity;
-		this.model.set('stockItems', newStockItems);
+		this.model.set('_stockItems', newStockItems);
 
 		this.attributes = data;
 		return this;
@@ -798,7 +799,7 @@ class CartItem extends Base {
 
 		let cart = this.getCart();
 		let index = UTILS.findObjectIndexFromArray(cart.where(), {id: this.id});
-		let modelStockItems = this.model.get('stockItems');
+		let modelStockItems = this.model.get('_stockItems');
 		let quantity = this.get('quantity');
 		let newStockItems;
 
@@ -807,7 +808,7 @@ class CartItem extends Base {
 		}
 
 		if (newStockItems) {
-			this.model.set('stockItems', newStockItems);
+			this.model.set('_stockItems', newStockItems);
 		}
 
 		if (index !== false) {
@@ -923,7 +924,7 @@ class Cart extends Base {
 			return false;
 		}
 
-		if (!model.get('stockItems')) {
+		if (!model.get('_stockItems')) {
 			alert('ошибка 1 ');
 			return false;
 		}
@@ -988,6 +989,29 @@ class Cart extends Base {
 	}
 
 	/**
+	 * change cart item options
+	 *
+	 * @param {Product} model
+	 * @param {Object} data
+	 * @param {Object} options
+	 */
+	change(model, data, options) {
+		return this.add(model, data, options);
+	}
+
+	/**
+	 * change cart item quantity
+	 *
+	 * @param {Product} model
+	 * @param {Number} quantity
+	 * @param {Object} options
+	 * @returns {*}
+	 */
+	changeQuantity(model, quantity, options){
+		return this.change(model, {quantity: quantity}, options);
+	}
+
+	/**
 	 * get product by id
 	 *
 	 * @param {Number|MainProduct|UpsellProduct} product
@@ -1041,20 +1065,19 @@ class Cart extends Base {
 		let activeUpsellSpecifications = _.compact(_.reduce(activeUpsellSpecificationsGroups, (memo, items) => (memo.concat(items)), []));
 		let activeUpsellSpecificationsIds = _.pluck(activeUpsellSpecifications, 'id');
 
-		if (this.activUpsells.length) {
-			for (var i in this.activUpsells) {
+		let currentActivUpsells = this.activUpsells.slice(0);
 
-				console.log(this.activUpsells[i]);
+		if (currentActivUpsells.length) {
+			for (var i = 0; i < currentActivUpsells.length; i++) {
 
-				if (activeUpsellSpecificationsIds.indexOf(this.activUpsells[i].id) >= 0) {
+				if (activeUpsellSpecificationsIds.indexOf(currentActivUpsells[i].id) >= 0) {
 					continue;
 				}
 				// если upsell продукт более не может находится в корзине (например удален main)
-				if (!this.activUpsells[i].check()) {
-					this.activUpsells[i].get('upsellProduct').removeFromCart();
+				if (!currentActivUpsells[i].check()) {
+					currentActivUpsells[i].get('upsellProduct').removeFromCart()
 				}
-				console.log(this.activUpsells[i]);
-				this.activUpsells[i].get('upsellProduct').trigger('canNotBuy');
+				currentActivUpsells[i].get('upsellProduct').trigger('canNotBuy');
 			}
 		}
 

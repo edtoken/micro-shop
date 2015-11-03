@@ -187,6 +187,18 @@ class ShopItem extends Component {
 		this.getCart().remove(this.props.model.id);
 	}
 
+	handleClickChangeQuantity(e){
+		e.preventDefault();
+		let count = parseInt(prompt('Введите количество', '1'));
+		if (Validator.validate(count, ['integer', 'positive'])) {
+			if(this.getCart().changeQuantity(this.props.model, count, {})){
+				alert('изменено')
+			}
+		} else {
+			alert('Неверное количество')
+		}
+	}
+
 	render() {
 
 		let model = this.props.model;
@@ -194,7 +206,7 @@ class ShopItem extends Component {
 		let type = model.getType();
 		let upsell = (type == 'upsell');
 		let inCart = model.inCart();
-		let stockItems = json.stockItems;
+		let stockItems = json._stockItems;
 		let price = json.price;
 		let canAddToCart = (stockItems > 0);
 
@@ -220,17 +232,14 @@ class ShopItem extends Component {
 			<div><b>{json.name}</b> id:{model.id}</div>
 
 			{!canAddToCart && <div>Закончился на складе</div>}
-			{canAddToCart &&
-			<div>
-				{!inCart && <div>
-					<button onClick={this.handlerClickAddToCart.bind(this)}>add to cart</button>
-				</div>}
+			{!inCart && <div>
+				<button onClick={this.handlerClickAddToCart.bind(this)}>add to cart</button>
+			</div>}
 
-				{inCart && <div>
-					<button onClick={this.handleClickRemoveFromCart.bind(this)}>remove from cart</button>
-				</div>}
-			</div>
-			}
+			{inCart && <div>
+				<button onClick={this.handleClickRemoveFromCart.bind(this)}>remove from cart</button>
+				<button onClick={this.handleClickChangeQuantity.bind(this)}>change quantity</button>
+			</div>}
 
 			<div>stockItems: {stockItems}</div>
 			<div>price: {price}</div>

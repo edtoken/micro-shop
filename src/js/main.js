@@ -92,10 +92,12 @@ var s = new Date();
 	 * @returns {{id: Number, price: Number, stockItems: Number}}
 	 */
 	function genProductData(id) {
+		var stockItems = getRandom(1, 100);
 		return {
 			id: parseInt(id),
 			price: +(getRandom(100, 1000) + Math.random()).toFixed(2),
-			stockItems: getRandom(1, 100)
+			stockItems: stockItems,
+			_stockItems: stockItems
 		}
 	}
 

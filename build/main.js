@@ -120,10 +120,12 @@
 	  * @returns {{id: Number, price: Number, stockItems: Number}}
 	  */
 		function genProductData(id) {
+			var stockItems = getRandom(1, 100);
 			return {
 				id: parseInt(id),
 				price: +(getRandom(100, 1000) + Math.random()).toFixed(2),
-				stockItems: getRandom(1, 100)
+				stockItems: stockItems,
+				_stockItems: stockItems
 			};
 		}
 
@@ -21775,6 +21777,19 @@
 				this.getCart().remove(this.props.model.id);
 			}
 		}, {
+			key: 'handleClickChangeQuantity',
+			value: function handleClickChangeQuantity(e) {
+				e.preventDefault();
+				var count = parseInt(prompt('Введите количество', '1'));
+				if (_Validator2['default'].validate(count, ['integer', 'positive'])) {
+					if (this.getCart().changeQuantity(this.props.model, count, {})) {
+						alert('изменено');
+					}
+				} else {
+					alert('Неверное количество');
+				}
+			}
+		}, {
 			key: 'render',
 			value: function render() {
 
@@ -21783,7 +21798,7 @@
 				var type = model.getType();
 				var upsell = type == 'upsell';
 				var inCart = model.inCart();
-				var stockItems = json.stockItems;
+				var stockItems = json._stockItems;
 				var price = json.price;
 				var canAddToCart = stockItems > 0;
 
@@ -21844,26 +21859,27 @@
 						null,
 						'Закончился на складе'
 					),
-					canAddToCart && _react2['default'].createElement(
+					!inCart && _react2['default'].createElement(
 						'div',
 						null,
-						!inCart && _react2['default'].createElement(
-							'div',
-							null,
-							_react2['default'].createElement(
-								'button',
-								{ onClick: this.handlerClickAddToCart.bind(this) },
-								'add to cart'
-							)
+						_react2['default'].createElement(
+							'button',
+							{ onClick: this.handlerClickAddToCart.bind(this) },
+							'add to cart'
+						)
+					),
+					inCart && _react2['default'].createElement(
+						'div',
+						null,
+						_react2['default'].createElement(
+							'button',
+							{ onClick: this.handleClickRemoveFromCart.bind(this) },
+							'remove from cart'
 						),
-						inCart && _react2['default'].createElement(
-							'div',
-							null,
-							_react2['default'].createElement(
-								'button',
-								{ onClick: this.handleClickRemoveFromCart.bind(this) },
-								'remove from cart'
-							)
+						_react2['default'].createElement(
+							'button',
+							{ onClick: this.handleClickChangeQuantity.bind(this) },
+							'change quantity'
 						)
 					),
 					_react2['default'].createElement(
@@ -23122,6 +23138,7 @@
 					id: null,
 					price: null,
 					stockItems: null,
+					_stockItems: null,
 					name: null
 				};
 			}
@@ -23591,7 +23608,7 @@
 
 				// невозможно добавить столько в корзину
 				// лучше бы перенести эту валидацию в validators
-				if (attr.quantity && this.model.get('stockItems') - attr.quantity < 0) {
+				if (attr.quantity && this.model.get('_stockItems') - attr.quantity < 0) {
 					validationErrors['stockItemsError'] = true;
 					hasNotError = false;
 				}
@@ -23634,7 +23651,7 @@
 				// изменяю количество товаров на складе
 				var modelStockItems = this.model.get('stockItems');
 				var newStockItems = modelStockItems - data.quantity;
-				this.model.set('stockItems', newStockItems);
+				this.model.set('_stockItems', newStockItems);
 
 				this.attributes = data;
 				return this;
@@ -23680,7 +23697,7 @@
 
 				var cart = this.getCart();
 				var index = UTILS.findObjectIndexFromArray(cart.where(), { id: this.id });
-				var modelStockItems = this.model.get('stockItems');
+				var modelStockItems = this.model.get('_stockItems');
 				var quantity = this.get('quantity');
 				var newStockItems = undefined;
 
@@ -23689,7 +23706,7 @@
 				}
 
 				if (newStockItems) {
-					this.model.set('stockItems', newStockItems);
+					this.model.set('_stockItems', newStockItems);
 				}
 
 				if (index !== false) {
@@ -23826,7 +23843,7 @@
 					return false;
 				}
 
-				if (!model.get('stockItems')) {
+				if (!model.get('_stockItems')) {
 					alert('ошибка 1 ');
 					return false;
 				}
@@ -23891,6 +23908,33 @@
 				}
 
 				throw 'invalid product id [' + id + ']';
+			}
+
+			/**
+	   * change cart item options
+	   *
+	   * @param {Product} model
+	   * @param {Object} data
+	   * @param {Object} options
+	   */
+		}, {
+			key: 'change',
+			value: function change(model, data, options) {
+				return this.add(model, data, options);
+			}
+
+			/**
+	   * change cart item quantity
+	   *
+	   * @param {Product} model
+	   * @param {Number} quantity
+	   * @param {Object} options
+	   * @returns {*}
+	   */
+		}, {
+			key: 'changeQuantity',
+			value: function changeQuantity(model, quantity, options) {
+				return this.change(model, { quantity: quantity }, options);
 			}
 
 			/**
@@ -23965,20 +24009,19 @@
 				}, []));
 				var activeUpsellSpecificationsIds = _underscore2['default'].pluck(activeUpsellSpecifications, 'id');
 
-				if (this.activUpsells.length) {
-					for (var i in this.activUpsells) {
+				var currentActivUpsells = this.activUpsells.slice(0);
 
-						console.log(this.activUpsells[i]);
+				if (currentActivUpsells.length) {
+					for (var i = 0; i < currentActivUpsells.length; i++) {
 
-						if (activeUpsellSpecificationsIds.indexOf(this.activUpsells[i].id) >= 0) {
+						if (activeUpsellSpecificationsIds.indexOf(currentActivUpsells[i].id) >= 0) {
 							continue;
 						}
 						// если upsell продукт более не может находится в корзине (например удален main)
-						if (!this.activUpsells[i].check()) {
-							this.activUpsells[i].get('upsellProduct').removeFromCart();
+						if (!currentActivUpsells[i].check()) {
+							currentActivUpsells[i].get('upsellProduct').removeFromCart();
 						}
-						console.log(this.activUpsells[i]);
-						this.activUpsells[i].get('upsellProduct').trigger('canNotBuy');
+						currentActivUpsells[i].get('upsellProduct').trigger('canNotBuy');
 					}
 				}
 
