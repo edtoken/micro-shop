@@ -34,6 +34,10 @@ const UTILS = {
 		return UTILS.isMainProduct(object.model);
 	},
 
+	isValidRequiest: (object) => {
+		return true;
+	},
+
 	//5) UpsellProduct может добавляться только с quantity = 1
 	validateCartQUANTITY: function (value) {
 		if (UTILS.isUpsellProduct(this.model)) {
@@ -44,7 +48,34 @@ const UTILS = {
 		return true;
 	},
 
-	sync: (method, data, options) => {
+	processRequiest: function(resp) {
+		if (UTILS.isValidRequiest(resp)) {
+			this.requestData.options.success.apply(this, arguments);
+		} else {
+			this.requestData.options.error.apply(this, arguments);
+		}
+	},
+
+	sync: (method, object, data, options) => {
+
+		options = options || (options = {});
+
+		var requestData = _.extend({
+			success: UTILS.processRequiest,
+			error: UTILS.processRequiest
+		}, options);
+
+		requestData.context = {
+			method: method,
+			object: object,
+			data: data,
+			options: options,
+			requestData: requestData
+		};
+
+		// даже backbone юзает ajax
+		// тут дальше будет просто обычный ajax
+
 
 	}
 };
@@ -478,7 +509,14 @@ class Product extends Base {
 	 * synchronize product with server
 	 */
 	sync() {
+		UTILS.sync('fetch', this, {}, {
+			success: function () {
 
+			},
+			error: function () {
+
+			}
+		});
 	}
 
 	toJSON() {
@@ -696,6 +734,7 @@ class CartItem extends Base {
 
 	/**
 	 * validate attributes
+	 * 7) В любой момент времени объект Cart должен находиться в валидном состоянии.
 	 *
 	 * @param {Object} attr
 	 * @param {Object} options
@@ -943,6 +982,7 @@ class Cart extends Base {
 	/**
 	 * add item to cart
 	 *
+	 *
 	 * @param {UpsellProduct|MainProduct} model
 	 * @param {Object} data
 	 * @param {Object} options
@@ -1132,9 +1172,17 @@ class Cart extends Base {
 
 	/**
 	 * synchronize cart with server
+	 * 8) Реализовать метод sync() для синхронизации с сервером.
 	 */
 	sync() {
+		UTILS.sync('fetch', this, {}, {
+			success: function () {
 
+			},
+			error: function () {
+
+			}
+		});
 	}
 }
 
@@ -1272,5 +1320,13 @@ export default class Shop extends Base {
 	 */
 	sync() {
 
+		UTILS.sync('fetch', this, {}, {
+			success: function () {
+
+			},
+			error: function () {
+
+			}
+		});
 	}
 }

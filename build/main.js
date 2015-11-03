@@ -22797,7 +22797,25 @@
 			return true;
 		},
 
-		sync: function sync(method, data, options) {}
+		processRequiest: function processRequiest(success, error) {},
+
+		sync: function sync(method, object, data, options) {
+
+			options = options || (options = {});
+
+			var requestData = _underscore2['default'].extend({
+
+				success: processRequiest
+			}, options);
+
+			requestData.context = {
+				method: method,
+				object: object,
+				data: data,
+				options: options,
+				requestData: requestData
+			};
+		}
 	};
 
 	/**
@@ -23307,7 +23325,12 @@
 	   */
 		}, {
 			key: 'sync',
-			value: function sync() {}
+			value: function sync() {
+				UTILS.sync('fetch', this, {}, {
+					success: function success() {},
+					error: function error() {}
+				});
+			}
 		}, {
 			key: 'toJSON',
 			value: function toJSON() {
@@ -23590,6 +23613,7 @@
 
 			/**
 	   * validate attributes
+	   * 7) В любой момент времени объект Cart должен находиться в валидном состоянии.
 	   *
 	   * @param {Object} attr
 	   * @param {Object} options
@@ -23865,6 +23889,7 @@
 			/**
 	   * add item to cart
 	   *
+	   *
 	   * @param {UpsellProduct|MainProduct} model
 	   * @param {Object} data
 	   * @param {Object} options
@@ -24086,10 +24111,16 @@
 
 			/**
 	   * synchronize cart with server
+	   * 8) Реализовать метод sync() для синхронизации с сервером.
 	   */
 		}, {
 			key: 'sync',
-			value: function sync() {}
+			value: function sync() {
+				UTILS.sync('fetch', this, {}, {
+					success: function success() {},
+					error: function error() {}
+				});
+			}
 		}]);
 
 		return Cart;
@@ -24248,7 +24279,13 @@
 	   */
 		}, {
 			key: 'sync',
-			value: function sync() {}
+			value: function sync() {
+
+				UTILS.sync('fetch', this, {}, {
+					success: function success() {},
+					error: function error() {}
+				});
+			}
 		}]);
 
 		return Shop;
