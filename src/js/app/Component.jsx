@@ -164,7 +164,7 @@ class ShopItem extends Component {
 	}
 
 	handleChangeModel() {
-
+		// todo: component is unmounted
 		this.forceUpdate();
 	}
 
@@ -401,6 +401,11 @@ export default class Layout extends Component {
 	renderNotification(title, description, options) {
 		this.refs.LayoutNotifications.renderNotification(title, description, options);
 	}
+
+	hidePopUp(){
+		this.refs.LayoutNotifications.hide();
+	}
+
 
 	render() {
 

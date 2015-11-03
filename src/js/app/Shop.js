@@ -550,6 +550,10 @@ export class MainProduct extends Product {
 		let activeUpsells = _.compact(_.map(upsells, upsell => (upsell.checkSpecification(this))));
 		return (activeUpsells && activeUpsells.length) ? activeUpsells : false;
 	}
+
+	getAllUpsells() {
+		return _.values(this.upsellSpecification);
+	}
 }
 
 /**
@@ -637,7 +641,8 @@ export class UpsellProduct extends Product {
 
 	checkSpecification(mainProduct) {
 		let specList = this.getSpecificationsByMainProduct(mainProduct);
-		return _.find(specList, item => (item.check()));
+		let spec = _.find(specList, item => (item.check()));
+		return spec ? spec : false;
 	}
 
 }
@@ -801,6 +806,8 @@ class CartItem extends Base {
 	 */
 	removeFromCart() {
 
+		// todo можно сделать model.set('_stockItems', model.get('stockItems'));
+
 		let cart = this.getCart();
 		let index = UTILS.findObjectIndexFromArray(cart.where(), {id: this.id});
 		let modelStockItems = this.model.get('_stockItems');
@@ -816,9 +823,27 @@ class CartItem extends Base {
 		}
 
 		if (index !== false) {
+
 			cart.models.splice(index, 1);
 			delete cart.byId[this.id];
 			cart.trigger('remove', this);
+
+			// если продукт был в корзине
+			// и он main
+			// надо проверить его upsells
+			if (Validator.validate(this.model, [UTILS.isMainProduct])) {
+				let upsellProducts = this.model.getAllUpsells();
+
+				_.each(upsellProducts, function (product) {
+					let activeUpsellSpecifications = product.checkSpecifications();
+					// если у upsellProduct не выполняется ни один upsellSpecification
+					// удаляю его из корзины
+					if (!activeUpsellSpecifications) {
+						product.removeFromCart();
+					}
+				});
+			}
+
 		}
 
 	}
@@ -1019,7 +1044,7 @@ class Cart extends Base {
 	 * @param {Object} options
 	 * @returns {*}
 	 */
-	changeQuantity(model, quantity, options){
+	changeQuantity(model, quantity, options) {
 		return this.change(model, {quantity: quantity}, options);
 	}
 
@@ -1093,13 +1118,13 @@ class Cart extends Base {
 			}
 		}
 
-		this.activUpsells = activeUpsellSpecifications;
+		this.activUpsells = _.filter(activeUpsellSpecifications, item => (item.checkAdd()));
 		_.each(this.activUpsells, item => (item.get('upsellProduct').trigger('canBuy')));
 
 		//6) При достижении Cart требований одного из UpsellAvailabalitySpecification,
 		// должен срабатывать триггер и вызываться подписчик ShowUpsellPopup.showUpsellInformation(upsell), но только
 		//если upsell еще не добавлен в Cart
-		if (this.activUpsells.length) {
+		if (this.activUpsells) {
 			this.trigger('changeUpsellInformation');
 			this.trigger('showUpsellInformation');
 		}
@@ -1130,7 +1155,13 @@ export default class Shop extends Base {
 	}
 
 	showUpsellInformation() {
-		this.getShop().showUpsellPopup.showUpsellInformation(this.getCart().activUpsells);
+		if (this.getCart().activUpsells.length) {
+			this.getShop().showUpsellPopup.showUpsellInformation(this.getCart().activUpsells);
+		} else {
+			// todo popup может принадлежать кому-нибудь другому
+			// надо добавить popupId
+			this.getLayout().hidePopUp();
+		}
 	}
 
 	/**

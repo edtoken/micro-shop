@@ -21753,7 +21753,7 @@
 		}, {
 			key: 'handleChangeModel',
 			value: function handleChangeModel() {
-
+				// todo: component is unmounted
 				this.forceUpdate();
 			}
 		}, {
@@ -22149,6 +22149,11 @@
 			key: 'renderNotification',
 			value: function renderNotification(title, description, options) {
 				this.refs.LayoutNotifications.renderNotification(title, description, options);
+			}
+		}, {
+			key: 'hidePopUp',
+			value: function hidePopUp() {
+				this.refs.LayoutNotifications.hide();
 			}
 		}, {
 			key: 'render',
@@ -22782,6 +22787,7 @@
 			return UTILS.isMainProduct(object.model);
 		},
 
+		//5) UpsellProduct может добавляться только с quantity = 1
 		validateCartQUANTITY: function validateCartQUANTITY(value) {
 			if (UTILS.isUpsellProduct(this.model)) {
 				if (value > 1) {
@@ -23040,6 +23046,9 @@
 
 			/**
 	   * check current spec to ready
+	   * 4) Корзина не должна давать возможности добавлять конкретный UpsellProduct
+	   * до момента пока корзина не соответствует условиям соответствующего UpsellAvailabalitySpecification
+	   *
 	   */
 		}, {
 			key: 'checkAdd',
@@ -23389,6 +23398,11 @@
 				}));
 				return activeUpsells && activeUpsells.length ? activeUpsells : false;
 			}
+		}, {
+			key: 'getAllUpsells',
+			value: function getAllUpsells() {
+				return _underscore2['default'].values(this.upsellSpecification);
+			}
 		}]);
 
 		return MainProduct;
@@ -23504,9 +23518,10 @@
 			key: 'checkSpecification',
 			value: function checkSpecification(mainProduct) {
 				var specList = this.getSpecificationsByMainProduct(mainProduct);
-				return _underscore2['default'].find(specList, function (item) {
+				var spec = _underscore2['default'].find(specList, function (item) {
 					return item.check();
 				});
+				return spec ? spec : false;
 			}
 		}]);
 
@@ -23695,6 +23710,8 @@
 			key: 'removeFromCart',
 			value: function removeFromCart() {
 
+				// todo можно сделать model.set('_stockItems', model.get('stockItems'));
+
 				var cart = this.getCart();
 				var index = UTILS.findObjectIndexFromArray(cart.where(), { id: this.id });
 				var modelStockItems = this.model.get('_stockItems');
@@ -23710,9 +23727,26 @@
 				}
 
 				if (index !== false) {
+
 					cart.models.splice(index, 1);
 					delete cart.byId[this.id];
 					cart.trigger('remove', this);
+
+					// если продукт был в корзине
+					// и он main
+					// надо проверить его upsells
+					if (_Validator2['default'].validate(this.model, [UTILS.isMainProduct])) {
+						var upsellProducts = this.model.getAllUpsells();
+
+						_underscore2['default'].each(upsellProducts, function (product) {
+							var activeUpsellSpecifications = product.checkSpecifications();
+							// если у upsellProduct не выполняется ни один upsellSpecification
+							// удаляю его из корзины
+							if (!activeUpsellSpecifications) {
+								product.removeFromCart();
+							}
+						});
+					}
 				}
 			}
 		}, {
@@ -23882,6 +23916,7 @@
 
 			/**
 	   * add item to cart with quantity
+	   * 1) Метод добавления продукта в корзину с указанием quantity.
 	   *
 	   * @param {UpsellProduct|MainProduct} model
 	   * @param {Number} quantity
@@ -23892,6 +23927,13 @@
 			value: function addWithQuantity(model, quantity, options) {
 				return this.add(model, { quantity: quantity }, options);
 			}
+
+			/**
+	   * 2) Метод удаления продукта
+	   *
+	   * @param {Product} product
+	   * @returns {*}
+	   */
 		}, {
 			key: 'remove',
 			value: function remove(product) {
@@ -23925,6 +23967,7 @@
 
 			/**
 	   * change cart item quantity
+	   * 3) Метод изменения quantity продукта.
 	   *
 	   * @param {Product} model
 	   * @param {Number} quantity
@@ -24025,12 +24068,17 @@
 					}
 				}
 
-				this.activUpsells = activeUpsellSpecifications;
+				this.activUpsells = _underscore2['default'].filter(activeUpsellSpecifications, function (item) {
+					return item.checkAdd();
+				});
 				_underscore2['default'].each(this.activUpsells, function (item) {
 					return item.get('upsellProduct').trigger('canBuy');
 				});
 
-				if (this.activUpsells.length) {
+				//6) При достижении Cart требований одного из UpsellAvailabalitySpecification,
+				// должен срабатывать триггер и вызываться подписчик ShowUpsellPopup.showUpsellInformation(upsell), но только
+				//если upsell еще не добавлен в Cart
+				if (this.activUpsells) {
 					this.trigger('changeUpsellInformation');
 					this.trigger('showUpsellInformation');
 				}
@@ -24066,7 +24114,13 @@
 		_createClass(Shop, [{
 			key: 'showUpsellInformation',
 			value: function showUpsellInformation() {
-				this.getShop().showUpsellPopup.showUpsellInformation(this.getCart().activUpsells);
+				if (this.getCart().activUpsells.length) {
+					this.getShop().showUpsellPopup.showUpsellInformation(this.getCart().activUpsells);
+				} else {
+					// todo popup может принадлежать кому-нибудь другому
+					// надо добавить popupId
+					this.getLayout().hidePopUp();
+				}
 			}
 
 			/**
