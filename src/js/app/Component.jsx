@@ -4,7 +4,6 @@ import _ from 'underscore';
 import Validator from './Validator';
 
 const STYLES = {
-
 	clearfix: {
 		styles: {
 			display: 'block',
@@ -12,307 +11,373 @@ const STYLES = {
 		}
 	},
 
-	cart: {
+	shopItem: {
 		styles: {
-			margin: '30px 0',
-			borderBottom: '1px solid #aaa',
-			paddingBottom: '30px'
-		}
-	},
-
-	layout: {
-		styles: {},
-		header: {
-			styles: {
-				margin: '0 0 30px 0'
-			}
-		}
-	},
-
-	page: {
-		styles: {
-			border: '1px solid #aaa',
-			padding: '15px'
-		}
-	},
-
-	product: {
-		styles: {
-			padding: '5px',
-			border: '1px solid #ddd',
-			display: 'block',
 			float: 'left',
-			margin: '4px',
-			height: '150px',
-			width: '150px',
-			overflowX: 'auto',
+			display: 'block',
+			width: '200px',
+			height: '250px',
+			border: '1px solid #ddd',
+			margin: '7px',
+			padding: '5px',
+			fontSize: '11px',
+			position: 'relative',
 			overflowY: 'auto'
+		}
+	},
+
+	notifications: {
+		wrap: {
+			styles: {
+				position: 'fixed',
+				left: 0,
+				top: 0,
+				right: 0,
+				bottom: 0,
+				width: '100%',
+				height: '100%',
+				zIndex: '1000',
+				background: 'rgba(0,0,0,0.5)',
+				overflowY: 'auto'
+			}
+		},
+
+		content: {
+			styles: {
+				background: '#fff',
+				width: '600px',
+				margin: '60px auto',
+				padding: '30px'
+			}
 		}
 	}
 };
 
-/**
- * Базовый класс
- */
 class Component extends React.Component {
 
 	/**
-	 * get global App obj
+	 * get global app object
 	 *
-	 * @returns {Object}
+	 * @returns {*}
 	 */
 	getApp() {
 		return window.SPAAPP0001;
 	}
 
+	/**
+	 * get global shop object
+	 *
+	 * @returns {*}
+	 */
 	getShop() {
 		return this.getApp().shop;
 	}
 
+	/**
+	 * get global cart object
+	 *
+	 * @returns {*}
+	 */
 	getCart() {
 		return this.getShop().getCart();
 	}
-}
 
-/**
- * Базовый класс для страницы
- */
-class PageComponent extends Component {
-
-}
-
-class ProductItem extends Component {
-
-	constructor(props) {
-		super(props);
-		this.state = this.createState();
-		this.listenEvents();
-	}
-
-	componentWillReceiveProps(nextProps) {
-		super.componentWillReceiveProps(nextProps);
-		this.props = nextProps;
-		this.updateState();
-		this.listenEvents();
+	/**
+	 * get layout component
+	 *
+	 * @returns {*}
+	 */
+	getLayout() {
+		return this.getApp().getLayout();
 	}
 
 	componentWillUnmount() {
-		this.props.model.off(null, null, this);
 	}
 
-	updateState() {
-		this.setState(this.createState());
-	}
-
-	createState() {
-		let state = {};
-		state.model = this.props.model.toJSON();
-		state.inCart = state.model.inCart;
-		return state;
-	}
-
-	listenEvents() {
-		this.props.model.off(null, null, this);
-		this.props.model.on('all', this.updateState, this);
-	}
-
-	handlerClickAddToCart(e) {
-		e.preventDefault();
-		var quantity = parseInt(prompt('Введите количество', '1'));
-		var errors = Validator.checkErrors(quantity, ['required', 'integer', 'positive']);
-
-		if (!errors) {
-			this.props.model.addToCart(quantity);
-			//this.getCart().addWidthQuantity(this.props.model, quantity);
-		} else {
-			alert('Error in console')
-			console.warn(errors);
-		}
-	}
-
-	handlerClickRemoveFromCart(e) {
-		e.preventDefault();
-
-		var product = this.getCart().get(this.state.model.id);
-		var quantity = (product)
-			? parseInt(prompt('Введите количество', product.data.quantity))
-			: 1;
-
-		var errors = Validator.checkErrors(quantity, ['required', 'integer', 'positive']);
-
-		if (!errors) {
-			product.model.removeFromCart(quantity);
-			//this.getCart().remove(productId, quantity);
-		} else {
-			alert('Error in console');
-			console.warn(errors);
-		}
-
-	}
-
-	handlerChangeQuantity(e) {
-		e.preventDefault();
-
-		var product = this.getCart().get(this.state.model.id);
-		var quantity = (product)
-			? parseInt(prompt('Введите количество', product.data.quantity))
-			: 1;
-
-		var errors = Validator.checkErrors(quantity, ['required', 'integer', 'positive']);
-
-		if (!errors) {
-			product.model.changeQuantity(quantity);
-			//this.getCart().remove(productId, quantity);
-		} else {
-			alert('Error in console');
-			console.warn(errors);
-		}
-
-	}
-
-	render() {
-
-		let model = this.props.model;
-		let inCart = model.inCart;
-		let upsellProduct = !model.isMainProduct();
-		let renderSpecifications;
-
-		if (upsellProduct) {
-			renderSpecifications = _.map(model.getSpecifications(), function (item, num) {
-				return (<div key={num} style={{fontSize:'10px'}}>
-					<div>main:{item.mainProduct.get('name')}</div>
-					<div>total:{item.totalCartPrice} || inCart:{item.itemsInCart}</div>
-				</div>)
-			});
-		}
-
-		return (<div className='Product' style={STYLES.product.styles}>
-			<span className='Product-title'>{model.get('name')}</span>
-			{upsellProduct && <div>
-				<small style={{color:'red'}}>upsell</small>
-			</div>}
-
-			<div>{renderSpecifications}</div>
-
-			<div>price:{model.get('price')}</div>
-
-			<div className='Product-actions'>
-				{inCart && <button onClick={this.handlerClickRemoveFromCart.bind(this)}>remove from cart</button>}
-				{inCart && <button onClick={this.handlerChangeQuantity.bind(this)}>changeQuantity</button>}
-				{!inCart && <button onClick={this.handlerClickAddToCart.bind(this)}>add to cart</button>}
-			</div>
-		</div>)
-	}
 }
 
 class CartView extends Component {
 
 	constructor(props) {
 		super(props);
-		this.state = this.createState();
-		this.listenEvents();
-	}
+		let cart = this.getCart();
 
-	componentWillReceiveProps(nextProps) {
-		super.componentWillReceiveProps(nextProps);
-		this.props = nextProps;
-		this.updateState();
-		this.listenEvents();
+		cart.on('all', this.handlerChangeCart, this);
+
+		this.state = this.createState(props);
 	}
 
 	componentWillUnmount() {
+		super.componentWillUnmount();
 		this.getCart().off(null, null, this);
 	}
 
-	updateState() {
-		this.setState(this.createState());
-	}
-
-	createState() {
+	createState(props) {
 		var cart = this.getCart();
 		var state = {};
 		state.totalPrice = cart.getTotalPrice();
-		state.items = cart.find();
+		state.itemsInCart = cart.getItemsInCart();
 		return state;
 	}
 
-	listenEvents() {
-		this.getCart().off(null, null, this);
-		this.getCart().on('add', this.updateState, this);
-		this.getCart().on('remove', this.updateState, this);
+	handlerChangeCart() {
+		this.setState(this.createState(this.props));
 	}
 
-	handlerClickRemove(productId) {
-
-		var product = this.getCart().get(productId);
-		if (product) {
-
-			var quantity = (product.data.quantity > 1)
-				? parseInt(prompt('Введите количество', product.data.quantity))
-				: 1;
-
-			var errors = Validator.checkErrors(quantity, ['required', 'integer']);
-
-			if (!errors) {
-				product.model.removeFromCart(quantity);
-				//this.getCart().remove(productId, quantity);
-			} else {
-				alert('Error in console')
-				console.warn(errors);
-			}
-			return this;
-		}
-
-		alert('Продукт не найден');
-		return false;
+	handleClickResetCart(e) {
+		e.preventDefault();
+		this.getCart().clear();
 	}
 
 	render() {
 
-		var state = this.state;
-		var self = this;
+		let state = this.state;
 
-		return (<div className='Cart' style={STYLES.cart.styles}>
-			<h1>Cart</h1>
+		return (<div className='CartView'>
+			<h2>CartView
+				{state.itemsInCart &&
+				<button onClick={this.handleClickResetCart.bind(this)}>clear cart</button>
+				}
+			</h2>
 
-			<div className='Cart-info'>
-				<ul>
-					<li>totalPrice: {state.totalPrice}</li>
-				</ul>
+			<div>totalPrice: {state.totalPrice}</div>
+			<div>itemsInCart: {state.itemsInCart}</div>
 
-				{state.items.map(function (item, num) {
-					return (<div key={num}>
-						{item.model.get('name')},
-						count: {item.data.quantity},
-						<button onClick={self.handlerClickRemove.bind(self, item.model.id)}>remove</button>
-					</div>);
-				})}
-			</div>
 		</div>);
 	}
 }
 
-/**
- * Класс страницы
- */
+class PageComponent extends Component {
+
+}
+
+class ShopItem extends Component {
+
+	constructor(props) {
+		super(props);
+		props.model.on('all', this.handleChangeModel, this);
+	}
+
+	componentWillUnmount() {
+		super.componentWillUnmount();
+		this.props.model.off(null, null, this);
+	}
+
+	handleChangeModel() {
+
+		this.forceUpdate();
+	}
+
+	handlerClickAddToCart(e) {
+		e.preventDefault();
+
+		let count = parseInt(prompt('Введите количество', '1'));
+		if (Validator.validate(count, ['integer', 'positive'])) {
+			if(this.getCart().addWithQuantity(this.props.model, count, {})){
+				alert('Добавлено')
+			}
+		} else {
+			alert('Неверное количество')
+		}
+
+	}
+
+	handleClickRemoveFromCart(e) {
+		e.preventDefault();
+		this.getCart().remove(this.props.model.id);
+	}
+
+	render() {
+
+		let model = this.props.model;
+		let json = model.toJSON();
+		let type = model.getType();
+		let upsell = (type == 'upsell');
+		let inCart = model.inCart();
+		let stockItems = json.stockItems;
+		let price = json.price;
+		let canAddToCart = (stockItems > 0);
+
+		let upsellSpecifications;
+		let canAddUpsell;
+
+		if (upsell) {
+			canAddUpsell = model.checkSpecifications();
+			upsellSpecifications = (<div>
+				{model.getSpecifications().map(function (item, num) {
+					let mainProduct = item.get('mainProduct')
+					return (<div key={num} style={{margin:'3px 0'}}>
+						<div>{mainProduct.get('name')} (id:{mainProduct.id})</div>
+						<div>total:{item.get('totalCartPrice')}</div>
+						<div>itemsCount:{item.get('itemsInCart')}</div>
+					</div>);
+				})}
+			</div>);
+		}
+
+		return (<div style={STYLES.shopItem.styles}>
+
+			<div><b>{json.name}</b> id:{model.id}</div>
+
+			{!canAddToCart && <div>Закончился на складе</div>}
+			{canAddToCart &&
+			<div>
+				{!inCart && <div>
+					<button onClick={this.handlerClickAddToCart.bind(this)}>add to cart</button>
+				</div>}
+
+				{inCart && <div>
+					<button onClick={this.handleClickRemoveFromCart.bind(this)}>remove from cart</button>
+				</div>}
+			</div>
+			}
+
+			<div>stockItems: {stockItems}</div>
+			<div>price: {price}</div>
+
+			{upsell &&
+			<div>
+				<div style={{position:'absolute', top:'0', left:'0', color:'red'}}>
+					upsell&nbsp;
+					{canAddUpsell && <span>МОЖНО ДОБАВИТЬ</span>}
+					{!canAddUpsell && <span>НЕЛЬЗЯ ДОБАВИТЬ</span>}
+				</div>
+				<h4 style={{margin:'0'}}>нужно купить:</h4>
+				{upsellSpecifications}
+			</div>
+			}
+
+		</div>);
+	}
+}
+
+
+class ShopItemPopUp extends ShopItem {
+
+}
+
+class ShopBlock extends Component {
+
+	render() {
+
+		let shopItems = this.getShop().where();
+		let renderItems = shopItems.map(function (model, num) {
+			return (<ShopItem key={num} model={model}/>);
+		});
+
+		return (<div>
+			{renderItems}
+			<div style={STYLES.clearfix.styles}></div>
+		</div>);
+	}
+}
+
+
 class IndexPage extends PageComponent {
 
 	render() {
-		//let products = this.getShop().getMainProducts();
-		// получаю все продукты, в том числе и upsell (для возможности неправильного добавления)
-		let products = this.getShop().find();
 
-		return (<div className='Page' style={STYLES.page.styles}>
-			<h1>Products
-				<small>(count:{products.length})</small>
-			</h1>
+		return (<div className='Page Page-index'>
+			<ShopBlock />
+		</div>);
+	}
+}
 
-			<div>
-				{products.map(function (product) {
-					return (<ProductItem key={product.id} model={product}/>);
-				})}
+class ShowUpsellInformationPopUp extends Component {
 
-				<div style={STYLES.clearfix.styles}></div>
+	render() {
+
+		let items = this.props.items;
+		let renderCarts = [];
+
+		_.each(items, (item, num) => (renderCarts.push(<ShopItemPopUp key={'popup-' + num } model={item.get('upsellProduct')}/>)));
+
+		return (<div className=''>
+			{renderCarts}
+			<div style={STYLES.clearfix.styles}></div>
+		</div>);
+	}
+}
+class LayoutNotifications extends Component {
+
+	constructor() {
+		super();
+		this.state = {notifications: []};
+	}
+
+	hide() {
+		this.setState({notifications:[]});
+	}
+
+	handlerClickClose(e) {
+		this.hide();
+	}
+
+	renderNotification(title, description, options) {
+		let notifications = this.state.notifications;
+
+		let t = false; // title
+		let d = false; // description
+		let o = false; // options
+
+		if (!title) {
+			return false;
+		}
+
+		if (!options) {
+
+			if (_.isObject(description)) {
+				t = title;
+				o = description;
+			} else {
+				t = title;
+				d = description;
+			}
+
+			if (!description) {
+				d = title;
+			}
+
+		}
+
+		if (!description) {
+			d = title;
+		}
+
+		notifications.push({title: t, description: d, options: o});
+		this.setState({notifications: notifications});
+		return this;
+	}
+
+	render() {
+
+		if (!this.state.notifications.length) {
+			return false;
+		}
+
+		let notification = this.state.notifications[this.state.notifications.length - 1];
+		let options = notification.options || ({type: ''});
+		var component = false;
+
+		switch (options.type) {
+			case 'showUpsellInformation':
+				component = (<ShowUpsellInformationPopUp items={options.data}/>);
+				break;
+
+			default:
+				component = (options && options.component) ? options.component : false;
+				break;
+		}
+
+		return (<div style={STYLES.notifications.wrap.styles}>
+			<div style={STYLES.notifications.content.styles}>
+				<span onClick={this.handlerClickClose.bind(this)}>CLOSE</span>
+
+				<div>
+					{notification.title && <h3>{notification.title}</h3>}
+					{notification.description && <div>{notification.description}</div>}
+					{component}
+				</div>
 			</div>
 		</div>);
 	}
@@ -320,18 +385,23 @@ class IndexPage extends PageComponent {
 
 export default class Layout extends Component {
 
+	constructor() {
+		super();
+	}
+
+	renderNotification(title, description, options) {
+		this.refs.LayoutNotifications.renderNotification(title, description, options);
+	}
+
 	render() {
 
-		var PageComponent = (<IndexPage />);
-		var Cart = (<CartView />);
+		let PageComponent = (<IndexPage />);
+		let CartComponent = (<CartView />);
 
-		return (<div className='Layout' style={STYLES.layout.styles}>
-			<div className='Layout-header' style={STYLES.layout.header.styles}>Layout Header</div>
-			<div className='Layout-pageComponent'>
-				{Cart}
-				{PageComponent}
-			</div>
+		return (<div>
+			<LayoutNotifications ref="LayoutNotifications"/>
+			{CartComponent}
+			{PageComponent}
 		</div>);
 	}
 }
-

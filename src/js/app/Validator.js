@@ -79,6 +79,23 @@ Validator.validators.float = (value) => {
 };
 
 /**
+ * value is integer or float
+ *
+ * @param value
+ * @returns {(false|{msg:String})}
+ */
+Validator.validators.floatOrInteger = (value) => {
+	let integer = Validator.checkError(value, 'integer');
+	let float = Validator.checkError(value, 'float');
+
+	if (!integer || !float) {
+		return false;
+	}
+
+	return integer ? integer : float;
+};
+
+/**
  * value is not string
  * return false if check done
  *
@@ -102,25 +119,53 @@ Validator.validators.required = (value) => {
 
 /**
  * function check
- * check value by ValidatorName
+ * check value by validator
  *
  * @param {String} value
- * @param {String} validatorName
+ * @param {String|Function} validator (string name or validate function)
  * @returns {(false|{error})}
  */
-Validator.checkError = (value, validatorName) => {
-	if (!Validator.validators[validatorName]) {
-		throw 'validator [' + validatorName + '] not found';
+Validator.checkError = (value, validator, context) => {
+
+	let ctx = context || this;
+	// custom validator
+	if (_.isFunction(validator)) {
+		return !validator.call(ctx, value);
 	}
-	return Validator.validators[validatorName](value);
+
+	if (!Validator.validators[validator]) {
+		throw 'validator [' + validator + '] not found';
+	}
+	return Validator.validators[validator].call(ctx, value);
 };
 
-Validator.checkErrors = (value, validatorNamesList) => {
-	var errors = _.compact(_.map(validatorNamesList.slice(0), function (validatorName) {
-		return Validator.checkError(value, validatorName);
+/**
+ * function check validators list
+ *
+ * @param {*} value
+ * @param {Array} validatorsList
+ * @returns {false|{Array}}
+ */
+Validator.checkErrors = (value, validatorsList, context) => {
+	var errors = _.compact(_.map(validatorsList.slice(0), function (validator) {
+		return Validator.checkError(value, validator, context);
 	}));
-
 	return errors.length ? errors : false;
+};
+
+/**
+ * simply validate
+ *
+ * @param {*} value
+ * @param {String} validator
+ * @returns {Boolean}
+ */
+Validator.validate = (value, validator, context) => {
+	let checkMethod = _.isArray(validator)
+		? Validator.checkErrors
+		: Validator.checkError;
+
+	return (checkMethod(value, validator, context) === false);
 };
 
 module.exports = Validator

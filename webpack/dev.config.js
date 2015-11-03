@@ -2,7 +2,7 @@ var LiveReloadPlugin = require("webpack-livereload-plugin");
 var webpack = require('webpack');
 var config = require('./default.config');
 
-var LIVERELOAD_PORT = 35735;
+var LIVERELOAD_PORT = 35738;
 
 config.plugins.push(new webpack.DefinePlugin({
 	__DEVELOPMENT__: true,

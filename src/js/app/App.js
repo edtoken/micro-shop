@@ -22,7 +22,11 @@ export default class App {
 		return (__DEVELOPMENT__);
 	}
 
+	getLayout(){
+		return this.layout;
+	}
+
 	run() {
-		ReactDOM.render(<Layout />, this.config.node);
+		this.layout = ReactDOM.render(<Layout />, this.config.node);
 	}
 }

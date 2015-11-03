@@ -62,7 +62,7 @@
 		(function () {
 			var node = document.getElementsByTagName('head').item(0) || document.documentElement;
 			var tag = document.createElement('script');
-			tag.src = '//localhost:' + (35735) + '/livereload.js';
+			tag.src = '//localhost:' + (35738) + '/livereload.js';
 			node.appendChild(tag);
 		})();
 	}
@@ -75,7 +75,8 @@
 	var node = document.getElementById('App');
 
 	// количество автосгенерированных продуктов (main)
-	var MAIN_PRODUCTS_COUNT = 5000;
+	//const MAIN_PRODUCTS_COUNT = 5000;
+	var MAIN_PRODUCTS_COUNT = 50;
 
 	// возможные mainProducts
 	var mainProductsNames = ['Кеды', 'Кроссовки', 'Футболка', 'Свитшот', 'Джинсы', 'Леггинсы', 'Шорты', 'Платье', 'Сумка', 'Свитер', 'Пайта', 'Майка', 'Кардиган'];
@@ -153,10 +154,9 @@
 			var productData = genMainProductData(count);
 			productData.name = mainProductsNames[getRandom(0, mainProductsNames.length - 1)];
 
-			// main product object
+			//// main product object
 			var mainProduct = new _appShop.MainProduct(productData);
 
-			// add main product to items
 			ITEMS.push(mainProduct);
 
 			// GENERATE UPSELLS
@@ -174,13 +174,13 @@
 				}
 
 				// add link mainProduct -> upsell
-				mainProduct.addSpecification(upsellProduct);
+				mainProduct.addSpecification(upsellProduct, {});
 
 				// add link upsell -> mainproduct
 				upsellProduct.addSpecification(mainProduct, upsellProduct, {
 					itemsInCart: getRandom(2, mainProductsNames.length),
 					totalCartPrice: +(mainProduct.get('price') * getRandom(2, 5).toFixed(2))
-				});
+				}, {});
 
 				upsellProductsCount--;
 			}
@@ -198,7 +198,7 @@
 	window.SPAAPP0001 = new _appApp2['default']({ development: (true), node: node, items: ITEMS });
 	window.SPAAPP0001.run();
 
-	console.log('development:', (true), ',livereload port:', (35735), 'run time:', new Date() - s, '.ms');
+	console.log('development:', (true), ',livereload port:', (35738), 'run time:', new Date() - s, '.ms');
 
 /***/ },
 /* 1 */
@@ -1826,9 +1826,14 @@
 				return (true);
 			}
 		}, {
+			key: 'getLayout',
+			value: function getLayout() {
+				return this.layout;
+			}
+		}, {
 			key: 'run',
 			value: function run() {
-				_reactDom2['default'].render(_react2['default'].createElement(_Component2['default'], null), this.config.node);
+				this.layout = _reactDom2['default'].render(_react2['default'].createElement(_Component2['default'], null), this.config.node);
 			}
 		}]);
 
@@ -21527,7 +21532,6 @@
 	var _Validator2 = _interopRequireDefault(_Validator);
 
 	var STYLES = {
-
 		clearfix: {
 			styles: {
 				display: 'block',
@@ -21535,48 +21539,47 @@
 			}
 		},
 
-		cart: {
+		shopItem: {
 			styles: {
-				margin: '30px 0',
-				borderBottom: '1px solid #aaa',
-				paddingBottom: '30px'
-			}
-		},
-
-		layout: {
-			styles: {},
-			header: {
-				styles: {
-					margin: '0 0 30px 0'
-				}
-			}
-		},
-
-		page: {
-			styles: {
-				border: '1px solid #aaa',
-				padding: '15px'
-			}
-		},
-
-		product: {
-			styles: {
-				padding: '5px',
-				border: '1px solid #ddd',
-				display: 'block',
 				float: 'left',
-				margin: '4px',
-				height: '150px',
-				width: '150px',
-				overflowX: 'auto',
+				display: 'block',
+				width: '200px',
+				height: '250px',
+				border: '1px solid #ddd',
+				margin: '7px',
+				padding: '5px',
+				fontSize: '11px',
+				position: 'relative',
 				overflowY: 'auto'
+			}
+		},
+
+		notifications: {
+			wrap: {
+				styles: {
+					position: 'fixed',
+					left: 0,
+					top: 0,
+					right: 0,
+					bottom: 0,
+					width: '100%',
+					height: '100%',
+					zIndex: '1000',
+					background: 'rgba(0,0,0,0.5)',
+					overflowY: 'auto'
+				}
+			},
+
+			content: {
+				styles: {
+					background: '#fff',
+					width: '600px',
+					margin: '60px auto',
+					padding: '30px'
+				}
 			}
 		}
 	};
-
-	/**
-	 * Базовый класс
-	 */
 
 	var Component = (function (_React$Component) {
 		_inherits(Component, _React$Component);
@@ -21587,38 +21590,138 @@
 			_get(Object.getPrototypeOf(Component.prototype), 'constructor', this).apply(this, arguments);
 		}
 
-		/**
-	  * Базовый класс для страницы
-	  */
-
 		_createClass(Component, [{
 			key: 'getApp',
 
 			/**
-	   * get global App obj
+	   * get global app object
 	   *
-	   * @returns {Object}
+	   * @returns {*}
 	   */
 			value: function getApp() {
 				return window.SPAAPP0001;
 			}
+
+			/**
+	   * get global shop object
+	   *
+	   * @returns {*}
+	   */
 		}, {
 			key: 'getShop',
 			value: function getShop() {
 				return this.getApp().shop;
 			}
+
+			/**
+	   * get global cart object
+	   *
+	   * @returns {*}
+	   */
 		}, {
 			key: 'getCart',
 			value: function getCart() {
 				return this.getShop().getCart();
 			}
+
+			/**
+	   * get layout component
+	   *
+	   * @returns {*}
+	   */
+		}, {
+			key: 'getLayout',
+			value: function getLayout() {
+				return this.getApp().getLayout();
+			}
+		}, {
+			key: 'componentWillUnmount',
+			value: function componentWillUnmount() {}
 		}]);
 
 		return Component;
 	})(_react2['default'].Component);
 
-	var PageComponent = (function (_Component) {
-		_inherits(PageComponent, _Component);
+	var CartView = (function (_Component) {
+		_inherits(CartView, _Component);
+
+		function CartView(props) {
+			_classCallCheck(this, CartView);
+
+			_get(Object.getPrototypeOf(CartView.prototype), 'constructor', this).call(this, props);
+			var cart = this.getCart();
+
+			cart.on('all', this.handlerChangeCart, this);
+
+			this.state = this.createState(props);
+		}
+
+		_createClass(CartView, [{
+			key: 'componentWillUnmount',
+			value: function componentWillUnmount() {
+				_get(Object.getPrototypeOf(CartView.prototype), 'componentWillUnmount', this).call(this);
+				this.getCart().off(null, null, this);
+			}
+		}, {
+			key: 'createState',
+			value: function createState(props) {
+				var cart = this.getCart();
+				var state = {};
+				state.totalPrice = cart.getTotalPrice();
+				state.itemsInCart = cart.getItemsInCart();
+				return state;
+			}
+		}, {
+			key: 'handlerChangeCart',
+			value: function handlerChangeCart() {
+				this.setState(this.createState(this.props));
+			}
+		}, {
+			key: 'handleClickResetCart',
+			value: function handleClickResetCart(e) {
+				e.preventDefault();
+				this.getCart().clear();
+			}
+		}, {
+			key: 'render',
+			value: function render() {
+
+				var state = this.state;
+
+				return _react2['default'].createElement(
+					'div',
+					{ className: 'CartView' },
+					_react2['default'].createElement(
+						'h2',
+						null,
+						'CartView',
+						state.itemsInCart && _react2['default'].createElement(
+							'button',
+							{ onClick: this.handleClickResetCart.bind(this) },
+							'clear cart'
+						)
+					),
+					_react2['default'].createElement(
+						'div',
+						null,
+						'totalPrice: ',
+						state.totalPrice
+					),
+					_react2['default'].createElement(
+						'div',
+						null,
+						'itemsInCart: ',
+						state.itemsInCart
+					)
+				);
+			}
+		}]);
+
+		return CartView;
+	})(Component);
+
+	var PageComponent = (function (_Component2) {
+		_inherits(PageComponent, _Component2);
 
 		function PageComponent() {
 			_classCallCheck(this, PageComponent);
@@ -21629,308 +21732,224 @@
 		return PageComponent;
 	})(Component);
 
-	var ProductItem = (function (_Component2) {
-		_inherits(ProductItem, _Component2);
+	var ShopItem = (function (_Component3) {
+		_inherits(ShopItem, _Component3);
 
-		function ProductItem(props) {
-			_classCallCheck(this, ProductItem);
+		function ShopItem(props) {
+			_classCallCheck(this, ShopItem);
 
-			_get(Object.getPrototypeOf(ProductItem.prototype), 'constructor', this).call(this, props);
-			this.state = this.createState();
-			this.listenEvents();
+			_get(Object.getPrototypeOf(ShopItem.prototype), 'constructor', this).call(this, props);
+			props.model.on('all', this.handleChangeModel, this);
 		}
 
-		_createClass(ProductItem, [{
-			key: 'componentWillReceiveProps',
-			value: function componentWillReceiveProps(nextProps) {
-				_get(Object.getPrototypeOf(ProductItem.prototype), 'componentWillReceiveProps', this).call(this, nextProps);
-				this.props = nextProps;
-				this.updateState();
-				this.listenEvents();
-			}
-		}, {
+		_createClass(ShopItem, [{
 			key: 'componentWillUnmount',
 			value: function componentWillUnmount() {
+				_get(Object.getPrototypeOf(ShopItem.prototype), 'componentWillUnmount', this).call(this);
 				this.props.model.off(null, null, this);
 			}
 		}, {
-			key: 'updateState',
-			value: function updateState() {
-				this.setState(this.createState());
-			}
-		}, {
-			key: 'createState',
-			value: function createState() {
-				var state = {};
-				state.model = this.props.model.toJSON();
-				state.inCart = state.model.inCart;
-				return state;
-			}
-		}, {
-			key: 'listenEvents',
-			value: function listenEvents() {
-				this.props.model.off(null, null, this);
-				this.props.model.on('all', this.updateState, this);
+			key: 'handleChangeModel',
+			value: function handleChangeModel() {
+
+				this.forceUpdate();
 			}
 		}, {
 			key: 'handlerClickAddToCart',
 			value: function handlerClickAddToCart(e) {
 				e.preventDefault();
-				var quantity = parseInt(prompt('Введите количество', '1'));
-				var errors = _Validator2['default'].checkErrors(quantity, ['required', 'integer', 'positive']);
 
-				if (!errors) {
-					this.props.model.addToCart(quantity);
-					//this.getCart().addWidthQuantity(this.props.model, quantity);
-				} else {
-						alert('Error in console');
-						console.warn(errors);
+				var count = parseInt(prompt('Введите количество', '1'));
+				if (_Validator2['default'].validate(count, ['integer', 'positive'])) {
+					if (this.getCart().addWithQuantity(this.props.model, count, {})) {
+						alert('Добавлено');
 					}
+				} else {
+					alert('Неверное количество');
+				}
 			}
 		}, {
-			key: 'handlerClickRemoveFromCart',
-			value: function handlerClickRemoveFromCart(e) {
+			key: 'handleClickRemoveFromCart',
+			value: function handleClickRemoveFromCart(e) {
 				e.preventDefault();
-
-				var product = this.getCart().get(this.state.model.id);
-				var quantity = product ? parseInt(prompt('Введите количество', product.data.quantity)) : 1;
-
-				var errors = _Validator2['default'].checkErrors(quantity, ['required', 'integer', 'positive']);
-
-				if (!errors) {
-					product.model.removeFromCart(quantity);
-					//this.getCart().remove(productId, quantity);
-				} else {
-						alert('Error in console');
-						console.warn(errors);
-					}
-			}
-		}, {
-			key: 'handlerChangeQuantity',
-			value: function handlerChangeQuantity(e) {
-				e.preventDefault();
-
-				var product = this.getCart().get(this.state.model.id);
-				var quantity = product ? parseInt(prompt('Введите количество', product.data.quantity)) : 1;
-
-				var errors = _Validator2['default'].checkErrors(quantity, ['required', 'integer', 'positive']);
-
-				if (!errors) {
-					product.model.changeQuantity(quantity);
-					//this.getCart().remove(productId, quantity);
-				} else {
-						alert('Error in console');
-						console.warn(errors);
-					}
+				this.getCart().remove(this.props.model.id);
 			}
 		}, {
 			key: 'render',
 			value: function render() {
 
 				var model = this.props.model;
-				var inCart = model.inCart;
-				var upsellProduct = !model.isMainProduct();
-				var renderSpecifications = undefined;
+				var json = model.toJSON();
+				var type = model.getType();
+				var upsell = type == 'upsell';
+				var inCart = model.inCart();
+				var stockItems = json.stockItems;
+				var price = json.price;
+				var canAddToCart = stockItems > 0;
 
-				if (upsellProduct) {
-					renderSpecifications = _underscore2['default'].map(model.getSpecifications(), function (item, num) {
-						return _react2['default'].createElement(
-							'div',
-							{ key: num, style: { fontSize: '10px' } },
-							_react2['default'].createElement(
-								'div',
-								null,
-								'main:',
-								item.mainProduct.get('name')
-							),
-							_react2['default'].createElement(
-								'div',
-								null,
-								'total:',
-								item.totalCartPrice,
-								' || inCart:',
-								item.itemsInCart
-							)
-						);
-					});
-				}
+				var upsellSpecifications = undefined;
+				var canAddUpsell = undefined;
 
-				return _react2['default'].createElement(
-					'div',
-					{ className: 'Product', style: STYLES.product.styles },
-					_react2['default'].createElement(
-						'span',
-						{ className: 'Product-title' },
-						model.get('name')
-					),
-					upsellProduct && _react2['default'].createElement(
+				if (upsell) {
+					canAddUpsell = model.checkSpecifications();
+					upsellSpecifications = _react2['default'].createElement(
 						'div',
 						null,
-						_react2['default'].createElement(
-							'small',
-							{ style: { color: 'red' } },
-							'upsell'
-						)
-					),
-					_react2['default'].createElement(
-						'div',
-						null,
-						renderSpecifications
-					),
-					_react2['default'].createElement(
-						'div',
-						null,
-						'price:',
-						model.get('price')
-					),
-					_react2['default'].createElement(
-						'div',
-						{ className: 'Product-actions' },
-						inCart && _react2['default'].createElement(
-							'button',
-							{ onClick: this.handlerClickRemoveFromCart.bind(this) },
-							'remove from cart'
-						),
-						inCart && _react2['default'].createElement(
-							'button',
-							{ onClick: this.handlerChangeQuantity.bind(this) },
-							'changeQuantity'
-						),
-						!inCart && _react2['default'].createElement(
-							'button',
-							{ onClick: this.handlerClickAddToCart.bind(this) },
-							'add to cart'
-						)
-					)
-				);
-			}
-		}]);
-
-		return ProductItem;
-	})(Component);
-
-	var CartView = (function (_Component3) {
-		_inherits(CartView, _Component3);
-
-		function CartView(props) {
-			_classCallCheck(this, CartView);
-
-			_get(Object.getPrototypeOf(CartView.prototype), 'constructor', this).call(this, props);
-			this.state = this.createState();
-			this.listenEvents();
-		}
-
-		/**
-	  * Класс страницы
-	  */
-
-		_createClass(CartView, [{
-			key: 'componentWillReceiveProps',
-			value: function componentWillReceiveProps(nextProps) {
-				_get(Object.getPrototypeOf(CartView.prototype), 'componentWillReceiveProps', this).call(this, nextProps);
-				this.props = nextProps;
-				this.updateState();
-				this.listenEvents();
-			}
-		}, {
-			key: 'componentWillUnmount',
-			value: function componentWillUnmount() {
-				this.getCart().off(null, null, this);
-			}
-		}, {
-			key: 'updateState',
-			value: function updateState() {
-				this.setState(this.createState());
-			}
-		}, {
-			key: 'createState',
-			value: function createState() {
-				var cart = this.getCart();
-				var state = {};
-				state.totalPrice = cart.getTotalPrice();
-				state.items = cart.find();
-				return state;
-			}
-		}, {
-			key: 'listenEvents',
-			value: function listenEvents() {
-				this.getCart().off(null, null, this);
-				this.getCart().on('add', this.updateState, this);
-				this.getCart().on('remove', this.updateState, this);
-			}
-		}, {
-			key: 'handlerClickRemove',
-			value: function handlerClickRemove(productId) {
-
-				var product = this.getCart().get(productId);
-				if (product) {
-
-					var quantity = product.data.quantity > 1 ? parseInt(prompt('Введите количество', product.data.quantity)) : 1;
-
-					var errors = _Validator2['default'].checkErrors(quantity, ['required', 'integer']);
-
-					if (!errors) {
-						product.model.removeFromCart(quantity);
-						//this.getCart().remove(productId, quantity);
-					} else {
-							alert('Error in console');
-							console.warn(errors);
-						}
-					return this;
-				}
-
-				alert('Продукт не найден');
-				return false;
-			}
-		}, {
-			key: 'render',
-			value: function render() {
-
-				var state = this.state;
-				var self = this;
-
-				return _react2['default'].createElement(
-					'div',
-					{ className: 'Cart', style: STYLES.cart.styles },
-					_react2['default'].createElement(
-						'h1',
-						null,
-						'Cart'
-					),
-					_react2['default'].createElement(
-						'div',
-						{ className: 'Cart-info' },
-						_react2['default'].createElement(
-							'ul',
-							null,
-							_react2['default'].createElement(
-								'li',
-								null,
-								'totalPrice: ',
-								state.totalPrice
-							)
-						),
-						state.items.map(function (item, num) {
+						model.getSpecifications().map(function (item, num) {
+							var mainProduct = item.get('mainProduct');
 							return _react2['default'].createElement(
 								'div',
-								{ key: num },
-								item.model.get('name'),
-								', count: ',
-								item.data.quantity,
-								',',
+								{ key: num, style: { margin: '3px 0' } },
 								_react2['default'].createElement(
-									'button',
-									{ onClick: self.handlerClickRemove.bind(self, item.model.id) },
-									'remove'
+									'div',
+									null,
+									mainProduct.get('name'),
+									' (id:',
+									mainProduct.id,
+									')'
+								),
+								_react2['default'].createElement(
+									'div',
+									null,
+									'total:',
+									item.get('totalCartPrice')
+								),
+								_react2['default'].createElement(
+									'div',
+									null,
+									'itemsCount:',
+									item.get('itemsInCart')
 								)
 							);
 						})
+					);
+				}
+
+				return _react2['default'].createElement(
+					'div',
+					{ style: STYLES.shopItem.styles },
+					_react2['default'].createElement(
+						'div',
+						null,
+						_react2['default'].createElement(
+							'b',
+							null,
+							json.name
+						),
+						' id:',
+						model.id
+					),
+					!canAddToCart && _react2['default'].createElement(
+						'div',
+						null,
+						'Закончился на складе'
+					),
+					canAddToCart && _react2['default'].createElement(
+						'div',
+						null,
+						!inCart && _react2['default'].createElement(
+							'div',
+							null,
+							_react2['default'].createElement(
+								'button',
+								{ onClick: this.handlerClickAddToCart.bind(this) },
+								'add to cart'
+							)
+						),
+						inCart && _react2['default'].createElement(
+							'div',
+							null,
+							_react2['default'].createElement(
+								'button',
+								{ onClick: this.handleClickRemoveFromCart.bind(this) },
+								'remove from cart'
+							)
+						)
+					),
+					_react2['default'].createElement(
+						'div',
+						null,
+						'stockItems: ',
+						stockItems
+					),
+					_react2['default'].createElement(
+						'div',
+						null,
+						'price: ',
+						price
+					),
+					upsell && _react2['default'].createElement(
+						'div',
+						null,
+						_react2['default'].createElement(
+							'div',
+							{ style: { position: 'absolute', top: '0', left: '0', color: 'red' } },
+							'upsell ',
+							canAddUpsell && _react2['default'].createElement(
+								'span',
+								null,
+								'МОЖНО ДОБАВИТЬ'
+							),
+							!canAddUpsell && _react2['default'].createElement(
+								'span',
+								null,
+								'НЕЛЬЗЯ ДОБАВИТЬ'
+							)
+						),
+						_react2['default'].createElement(
+							'h4',
+							{ style: { margin: '0' } },
+							'нужно купить:'
+						),
+						upsellSpecifications
 					)
 				);
 			}
 		}]);
 
-		return CartView;
+		return ShopItem;
+	})(Component);
+
+	var ShopItemPopUp = (function (_ShopItem) {
+		_inherits(ShopItemPopUp, _ShopItem);
+
+		function ShopItemPopUp() {
+			_classCallCheck(this, ShopItemPopUp);
+
+			_get(Object.getPrototypeOf(ShopItemPopUp.prototype), 'constructor', this).apply(this, arguments);
+		}
+
+		return ShopItemPopUp;
+	})(ShopItem);
+
+	var ShopBlock = (function (_Component4) {
+		_inherits(ShopBlock, _Component4);
+
+		function ShopBlock() {
+			_classCallCheck(this, ShopBlock);
+
+			_get(Object.getPrototypeOf(ShopBlock.prototype), 'constructor', this).apply(this, arguments);
+		}
+
+		_createClass(ShopBlock, [{
+			key: 'render',
+			value: function render() {
+
+				var shopItems = this.getShop().where();
+				var renderItems = shopItems.map(function (model, num) {
+					return _react2['default'].createElement(ShopItem, { key: num, model: model });
+				});
+
+				return _react2['default'].createElement(
+					'div',
+					null,
+					renderItems,
+					_react2['default'].createElement('div', { style: STYLES.clearfix.styles })
+				);
+			}
+		}]);
+
+		return ShopBlock;
 	})(Component);
 
 	var IndexPage = (function (_PageComponent) {
@@ -21945,33 +21964,11 @@
 		_createClass(IndexPage, [{
 			key: 'render',
 			value: function render() {
-				//let products = this.getShop().getMainProducts();
-				// получаю все продукты, в том числе и upsell (для возможности неправильного добавления)
-				var products = this.getShop().find();
 
 				return _react2['default'].createElement(
 					'div',
-					{ className: 'Page', style: STYLES.page.styles },
-					_react2['default'].createElement(
-						'h1',
-						null,
-						'Products',
-						_react2['default'].createElement(
-							'small',
-							null,
-							'(count:',
-							products.length,
-							')'
-						)
-					),
-					_react2['default'].createElement(
-						'div',
-						null,
-						products.map(function (product) {
-							return _react2['default'].createElement(ProductItem, { key: product.id, model: product });
-						}),
-						_react2['default'].createElement('div', { style: STYLES.clearfix.styles })
-					)
+					{ className: 'Page Page-index' },
+					_react2['default'].createElement(ShopBlock, null)
 				);
 			}
 		}]);
@@ -21979,36 +21976,177 @@
 		return IndexPage;
 	})(PageComponent);
 
-	var Layout = (function (_Component4) {
-		_inherits(Layout, _Component4);
+	var ShowUpsellInformationPopUp = (function (_Component5) {
+		_inherits(ShowUpsellInformationPopUp, _Component5);
+
+		function ShowUpsellInformationPopUp() {
+			_classCallCheck(this, ShowUpsellInformationPopUp);
+
+			_get(Object.getPrototypeOf(ShowUpsellInformationPopUp.prototype), 'constructor', this).apply(this, arguments);
+		}
+
+		_createClass(ShowUpsellInformationPopUp, [{
+			key: 'render',
+			value: function render() {
+
+				var items = this.props.items;
+				var renderCarts = [];
+
+				_underscore2['default'].each(items, function (item, num) {
+					return renderCarts.push(_react2['default'].createElement(ShopItemPopUp, { key: 'popup-' + num, model: item.get('upsellProduct') }));
+				});
+
+				return _react2['default'].createElement(
+					'div',
+					{ className: '' },
+					renderCarts,
+					_react2['default'].createElement('div', { style: STYLES.clearfix.styles })
+				);
+			}
+		}]);
+
+		return ShowUpsellInformationPopUp;
+	})(Component);
+
+	var LayoutNotifications = (function (_Component6) {
+		_inherits(LayoutNotifications, _Component6);
+
+		function LayoutNotifications() {
+			_classCallCheck(this, LayoutNotifications);
+
+			_get(Object.getPrototypeOf(LayoutNotifications.prototype), 'constructor', this).call(this);
+			this.state = { notifications: [] };
+		}
+
+		_createClass(LayoutNotifications, [{
+			key: 'hide',
+			value: function hide() {
+				this.setState({ notifications: [] });
+			}
+		}, {
+			key: 'handlerClickClose',
+			value: function handlerClickClose(e) {
+				this.hide();
+			}
+		}, {
+			key: 'renderNotification',
+			value: function renderNotification(title, description, options) {
+				var notifications = this.state.notifications;
+
+				var t = false; // title
+				var d = false; // description
+				var o = false; // options
+
+				if (!title) {
+					return false;
+				}
+
+				if (!options) {
+
+					if (_underscore2['default'].isObject(description)) {
+						t = title;
+						o = description;
+					} else {
+						t = title;
+						d = description;
+					}
+
+					if (!description) {
+						d = title;
+					}
+				}
+
+				if (!description) {
+					d = title;
+				}
+
+				notifications.push({ title: t, description: d, options: o });
+				this.setState({ notifications: notifications });
+				return this;
+			}
+		}, {
+			key: 'render',
+			value: function render() {
+
+				if (!this.state.notifications.length) {
+					return false;
+				}
+
+				var notification = this.state.notifications[this.state.notifications.length - 1];
+				var options = notification.options || { type: '' };
+				var component = false;
+
+				switch (options.type) {
+					case 'showUpsellInformation':
+						component = _react2['default'].createElement(ShowUpsellInformationPopUp, { items: options.data });
+						break;
+
+					default:
+						component = options && options.component ? options.component : false;
+						break;
+				}
+
+				return _react2['default'].createElement(
+					'div',
+					{ style: STYLES.notifications.wrap.styles },
+					_react2['default'].createElement(
+						'div',
+						{ style: STYLES.notifications.content.styles },
+						_react2['default'].createElement(
+							'span',
+							{ onClick: this.handlerClickClose.bind(this) },
+							'CLOSE'
+						),
+						_react2['default'].createElement(
+							'div',
+							null,
+							notification.title && _react2['default'].createElement(
+								'h3',
+								null,
+								notification.title
+							),
+							notification.description && _react2['default'].createElement(
+								'div',
+								null,
+								notification.description
+							),
+							component
+						)
+					)
+				);
+			}
+		}]);
+
+		return LayoutNotifications;
+	})(Component);
+
+	var Layout = (function (_Component7) {
+		_inherits(Layout, _Component7);
 
 		function Layout() {
 			_classCallCheck(this, Layout);
 
-			_get(Object.getPrototypeOf(Layout.prototype), 'constructor', this).apply(this, arguments);
+			_get(Object.getPrototypeOf(Layout.prototype), 'constructor', this).call(this);
 		}
 
 		_createClass(Layout, [{
+			key: 'renderNotification',
+			value: function renderNotification(title, description, options) {
+				this.refs.LayoutNotifications.renderNotification(title, description, options);
+			}
+		}, {
 			key: 'render',
 			value: function render() {
 
 				var PageComponent = _react2['default'].createElement(IndexPage, null);
-				var Cart = _react2['default'].createElement(CartView, null);
+				var CartComponent = _react2['default'].createElement(CartView, null);
 
 				return _react2['default'].createElement(
 					'div',
-					{ className: 'Layout', style: STYLES.layout.styles },
-					_react2['default'].createElement(
-						'div',
-						{ className: 'Layout-header', style: STYLES.layout.header.styles },
-						'Layout Header'
-					),
-					_react2['default'].createElement(
-						'div',
-						{ className: 'Layout-pageComponent' },
-						Cart,
-						PageComponent
-					)
+					null,
+					_react2['default'].createElement(LayoutNotifications, { ref: 'LayoutNotifications' }),
+					CartComponent,
+					PageComponent
 				);
 			}
 		}]);
@@ -22475,6 +22613,23 @@
 	};
 
 	/**
+	 * value is integer or float
+	 *
+	 * @param value
+	 * @returns {(false|{msg:String})}
+	 */
+	Validator.validators.floatOrInteger = function (value) {
+	  var integer = Validator.checkError(value, 'integer');
+	  var float = Validator.checkError(value, 'float');
+
+	  if (!integer || !float) {
+	    return false;
+	  }
+
+	  return integer ? integer : float;
+	};
+
+	/**
 	 * value is not string
 	 * return false if check done
 	 *
@@ -22498,25 +22653,51 @@
 
 	/**
 	 * function check
-	 * check value by ValidatorName
+	 * check value by validator
 	 *
 	 * @param {String} value
-	 * @param {String} validatorName
+	 * @param {String|Function} validator (string name or validate function)
 	 * @returns {(false|{error})}
 	 */
-	Validator.checkError = function (value, validatorName) {
-	  if (!Validator.validators[validatorName]) {
-	    throw 'validator [' + validatorName + '] not found';
+	Validator.checkError = function (value, validator, context) {
+
+	  var ctx = context || undefined;
+	  // custom validator
+	  if (_underscore2['default'].isFunction(validator)) {
+	    return !validator.call(ctx, value);
 	  }
-	  return Validator.validators[validatorName](value);
+
+	  if (!Validator.validators[validator]) {
+	    throw 'validator [' + validator + '] not found';
+	  }
+	  return Validator.validators[validator].call(ctx, value);
 	};
 
-	Validator.checkErrors = function (value, validatorNamesList) {
-	  var errors = _underscore2['default'].compact(_underscore2['default'].map(validatorNamesList.slice(0), function (validatorName) {
-	    return Validator.checkError(value, validatorName);
+	/**
+	 * function check validators list
+	 *
+	 * @param {*} value
+	 * @param {Array} validatorsList
+	 * @returns {false|{Array}}
+	 */
+	Validator.checkErrors = function (value, validatorsList, context) {
+	  var errors = _underscore2['default'].compact(_underscore2['default'].map(validatorsList.slice(0), function (validator) {
+	    return Validator.checkError(value, validator, context);
 	  }));
-
 	  return errors.length ? errors : false;
+	};
+
+	/**
+	 * simply validate
+	 *
+	 * @param {*} value
+	 * @param {String} validator
+	 * @returns {Boolean}
+	 */
+	Validator.validate = function (value, validator, context) {
+	  var checkMethod = _underscore2['default'].isArray(validator) ? Validator.checkErrors : Validator.checkError;
+
+	  return checkMethod(value, validator, context) === false;
 	};
 
 	module.exports = Validator;
@@ -22553,23 +22734,74 @@
 
 	var _Validator2 = _interopRequireDefault(_Validator);
 
-	var UPSELL_ADD_COUNT = 1;
-
+	/**
+	 * common utils
+	 */
 	var UTILS = {
 
-		getObjectIndexFromArray: function getObjectIndexFromArray(arr, object) {
+		findObjectIndexFromArray: function findObjectIndexFromArray(arr, object) {
 			var matches = _underscore2['default'].matches(object);
-			for (var i = 0; i < arr.length; i++) {
-				if (!matches(arr[i])) continue;
-				return i;
+			for (var i in arr) {
+				if (!matches(arr[i])) {
+					continue;
+				}
+				return parseInt(i);
 			}
 			return false;
-		}
+		},
+
+		isProduct: function isProduct(object) {
+			return object instanceof Product;
+		},
+
+		isMainProduct: function isMainProduct(object) {
+			return object instanceof MainProduct;
+		},
+
+		isUpsellProduct: function isUpsellProduct(object) {
+			return object instanceof UpsellProduct;
+		},
+
+		isCartMainProduct: function isCartMainProduct(object) {
+			return UTILS.isMainProduct(object.model);
+		},
+
+		validateCartQUANTITY: function validateCartQUANTITY(value) {
+			if (UTILS.isUpsellProduct(this.model)) {
+				if (value > 1) {
+					return false;
+				}
+			}
+			return true;
+		},
+
+		sync: function sync(method, data, options) {}
 	};
 
 	/**
-	 * BaseClass
-	 *
+	 * global shop options
+	 */
+	var OPTIONS = {
+		ajaxSync: '/sync'
+	};
+
+	/**
+	 * global shop validators
+	 */
+	var VALIDATORS = {
+		PRODUCT_ID: ['integer', 'positive'],
+		PRODUCT_PRICE: ['floatOrInteger', 'positive'],
+		PRODUCT_STOCKITEMS: ['integer', 'positive'],
+		PRODUCT_NAME: ['string'],
+		AVAILABALITYSPEC_UPSELL: [UTILS.isUpsellProduct],
+		AVAILABALITYSPEC_MAIN: [UTILS.isMainProduct],
+		AVAILABALITYSPEC_ITEMSINCART: ['integer'],
+		AVAILABALITYSPEC_TOTALCARTPRICE: ['floatOrInteger'],
+		CART_QUANTITY: ['integer', 'positive', UTILS.validateCartQUANTITY]
+	};
+
+	/**
+	 * Base class
 	 */
 
 	var Base = (function (_Events) {
@@ -22581,26 +22813,48 @@
 			_get(Object.getPrototypeOf(Base.prototype), 'constructor', this).apply(this, arguments);
 		}
 
+		/**
+	  * upsell popup
+	  *
+	  */
+
 		_createClass(Base, [{
 			key: 'getApp',
 
 			/**
-	   * get global App obj
+	   * get global app object
 	   *
-	   * @returns {Object}
+	   * @returns {*}
 	   */
 			value: function getApp() {
 				return window.SPAAPP0001;
 			}
+
+			/**
+	   * get global shop object
+	   *
+	   * @returns {*}
+	   */
 		}, {
 			key: 'getShop',
 			value: function getShop() {
 				return this.getApp().shop;
 			}
+
+			/**
+	   * get global cart object
+	   *
+	   * @returns {*}
+	   */
 		}, {
 			key: 'getCart',
 			value: function getCart() {
 				return this.getShop().getCart();
+			}
+		}, {
+			key: 'getLayout',
+			value: function getLayout() {
+				return this.getApp().getLayout();
 			}
 		}]);
 
@@ -22616,77 +22870,226 @@
 			_get(Object.getPrototypeOf(ShowUpsellPopup.prototype), 'constructor', this).apply(this, arguments);
 		}
 
+		/**
+	  * UpsellAvailabalitySpecification
+	  *
+	  */
+
 		_createClass(ShowUpsellPopup, [{
 			key: 'showUpsellInformation',
-			value: function showUpsellInformation(upsell) {
-				alert('upsell:' + JSON.stringify(upsell));
+			value: function showUpsellInformation(upsells) {
+				var description = 'Вам стали доступны для покупки следующие товары';
+				var options = { type: 'showUpsellInformation', data: upsells };
+				this.getLayout().renderNotification(description, options);
 			}
 		}]);
 
 		return ShowUpsellPopup;
 	})(Base);
 
-	var CartItem = (function (_Base2) {
-		_inherits(CartItem, _Base2);
+	var UpsellAvailabalitySpecification = (function (_Base2) {
+		_inherits(UpsellAvailabalitySpecification, _Base2);
 
-		function CartItem(model, data, options) {
-			_classCallCheck(this, CartItem);
-
-			_get(Object.getPrototypeOf(CartItem.prototype), 'constructor', this).call(this);
-			this.model = model;
-			this.data = data;
-			this.options = options;
-			this.id = this.model.id;
-		}
-
-		//export class UpsellSpecification extends Base {
-		//
-		//}
-
-		return CartItem;
-	})(Base);
-
-	var UpsellAvailabalitySpecification = (function (_Base3) {
-		_inherits(UpsellAvailabalitySpecification, _Base3);
-
-		//upsellProduct: UpsellProduct,
-		//mainProduct: MainProduct
-		//itemsInCart: integer, //items in cart of the mainProduct after upsell become available to be added in this cart
-		//totalCartPrice: float //total cart amount of all product after upsell become available to be added in cart
-
-		function UpsellAvailabalitySpecification(mainProduct, upsellProduct, options) {
+		function UpsellAvailabalitySpecification(data, options) {
 			_classCallCheck(this, UpsellAvailabalitySpecification);
 
 			_get(Object.getPrototypeOf(UpsellAvailabalitySpecification.prototype), 'constructor', this).call(this);
-			this.mainProduct = mainProduct;
-			this.upsellProduct = upsellProduct;
-			this.itemsInCart = options.itemsInCart;
-			this.totalCartPrice = options.totalCartPrice;
+			this.attributes = {};
+			this.validationError = null;
+			this.id = _underscore2['default'].uniqueId('upsell-');
+			this.set(data, options);
 		}
 
 		/**
 	  * Product class
-	  *
 	  */
+
+		/**
+	  * validate attributes
+	  *
+	  * @param {Object} attr
+	  * @param {Object} options
+	  * @returns {Boolean}
+	  * @private
+	  */
+
+		_createClass(UpsellAvailabalitySpecification, [{
+			key: '_validate',
+			value: function _validate(attr, options) {
+
+				var validationErrors = {};
+				var validators = this.validators();
+
+				var hasNotError = _underscore2['default'].every(validators, function (v, key) {
+
+					if (v.indexOf('required') < 0 && !attr[key]) {
+						return true;
+					}
+
+					var errors = _Validator2['default'].checkErrors(attr[key], v, this);
+
+					// errors not found - return true
+					if (!errors) {
+						return true;
+					}
+
+					validationErrors[key] = errors;
+					return false;
+				}, this);
+
+				if (_underscore2['default'].isEmpty(validationErrors)) {
+					this.validationError = null;
+				} else {
+					this.validationError = validationErrors;
+					this.trigger('error');
+				}
+
+				return hasNotError;
+			}
+
+			/**
+	   * upsell variable validators
+	   *
+	   */
+		}, {
+			key: 'validators',
+			value: function validators() {
+				return {
+					mainProduct: VALIDATORS.AVAILABALITYSPEC_MAIN,
+					upsellProduct: VALIDATORS.AVAILABALITYSPEC_UPSELL,
+					itemsInCart: VALIDATORS.AVAILABALITYSPEC_ITEMSINCART,
+					totalCartPrice: VALIDATORS.AVAILABALITYSPEC_TOTALCARTPRICE
+				};
+			}
+
+			/**
+	   * basic set upsell specification data
+	   *
+	   * @param {Object} data
+	   * @param {Object} options
+	   * @returns {*}
+	   */
+		}, {
+			key: 'set',
+			value: function set(data, options) {
+				options || (options = {});
+				if (!this._validate(data, options)) {
+					return false;
+				}
+				this.attributes = data;
+				return this;
+			}
+
+			// get attribute value
+		}, {
+			key: 'get',
+			value: function get(key) {
+				return this.attributes[key];
+			}
+
+			/**
+	   * пофиксить
+	   * проверка на то, что отдельный UpsellAvailabalitySpecification в данную секунду является возможным
+	   *
+	   * @returns {Boolean}
+	   */
+		}, {
+			key: 'check',
+			value: function check() {
+				var cart = this.getCart();
+				var mainProduct = this.get('mainProduct');
+				var upsellProduct = this.get('upsellProduct');
+				var cartItemMainProduct = cart.get(mainProduct.id);
+				var totalPrice = cart.getTotalPrice();
+				var upsellInCart = cart.itemInCart(upsellProduct.id);
+				var mainInCart = cart.itemInCart(mainProduct.id);
+
+				// если main товара нет в корзине - false
+				if (!mainInCart) {
+					return false;
+				}
+
+				// число конкретного товара в корзине >= this.itemsInCart
+				var checkCount = mainInCart && cartItemMainProduct.get('quantity') >= this.get('itemsInCart');
+
+				// сумма покупок в корзине >= this.totalCartPrice
+				var checkTotalPrice = totalPrice >= this.get('totalCartPrice');
+
+				if (checkCount || checkTotalPrice) {
+					return true;
+				}
+
+				return false;
+			}
+
+			/**
+	   * check current spec to ready
+	   */
+		}, {
+			key: 'checkAdd',
+			value: function checkAdd() {
+
+				var cart = this.getCart();
+				var mainProduct = this.get('mainProduct');
+				var upsellProduct = this.get('upsellProduct');
+				var cartItemMainProduct = cart.get(mainProduct.id);
+				var cartItemUpsellProduct = cart.get(upsellProduct.id);
+				var totalPrice = cart.getTotalPrice();
+				var upsellInCart = cart.itemInCart(upsellProduct.id);
+				var mainInCart = cart.itemInCart(mainProduct.id);
+
+				// если upsell уже в корзине
+				// что-то тут не так
+				if (upsellInCart) {
+					return false;
+				}
+
+				// если main товара нет в корзине - false
+				if (!mainInCart) {
+					return false;
+				}
+
+				// число конкретного товара в корзине >= this.itemsInCart
+				var checkCount = mainInCart && cartItemMainProduct.get('quantity') >= this.get('itemsInCart');
+
+				// сумма покупок в корзине >= this.totalCartPrice
+				var checkTotalPrice = totalPrice >= this.get('totalCartPrice');
+
+				if (checkCount || checkTotalPrice) {
+					return true;
+				}
+
+				return false;
+			}
+
+			/**
+	   * check model is valid?
+	   *
+	   * @returns {Boolean}
+	   */
+		}, {
+			key: 'isValid',
+			value: function isValid() {
+				return this._validate(this.attributes, {});
+			}
+		}, {
+			key: 'toJSON',
+			value: function toJSON() {
+				return _underscore2['default'].clone(this.attributes);
+			}
+		}]);
+
 		return UpsellAvailabalitySpecification;
 	})(Base);
 
-	exports.UpsellAvailabalitySpecification = UpsellAvailabalitySpecification;
+	var Product = (function (_Base3) {
+		_inherits(Product, _Base3);
 
-	var Product = (function (_Base4) {
-		_inherits(Product, _Base4);
-
-		//id: integer,
-		//price: float,
-		//stockItems: integer,
-		//name: string
-
-		function Product(data, options) {
+		function Product(attrs, options) {
 			_classCallCheck(this, Product);
 
 			_get(Object.getPrototypeOf(Product.prototype), 'constructor', this).call(this);
 
-			var attrs = data || {};
 			options || (options = {});
 
 			this.id = null;
@@ -22694,79 +23097,100 @@
 			this._attributes = {};
 			this.validationError = null;
 			this.idAttribute = 'id';
-			this.inCart = options.inCart || false;
 
-			attrs = _underscore2['default'].extend({}, this.defaults(), data);
-			this.set(attrs, options);
-			this.initialize(data, options);
+			var attr = _underscore2['default'].extend({}, this.defaults(), attrs);
+
+			this.set(attr, options);
 			this.trigger('initialize');
 			return this;
 		}
 
 		/**
 	  * MainProduct class
-	  * Основной продукт, который продается самостоятельно (или вместе с upsell)
+	  */
+
+		/**
+	  * default model attributes
+	  *
+	  * @returns {{}}
 	  */
 
 		_createClass(Product, [{
-			key: 'validators',
-			value: function validators() {
-				return {};
-			}
-		}, {
 			key: 'defaults',
 			value: function defaults() {
-				return {};
+				return {
+					id: null,
+					price: null,
+					stockItems: null,
+					name: null
+				};
 			}
+
+			/**
+	   * model attributes validators
+	   *
+	   * @returns {{}}
+	   */
 		}, {
-			key: 'initialize',
-			value: function initialize() {}
+			key: 'validators',
+			value: function validators() {
+				return {
+					id: VALIDATORS.PRODUCT_ID,
+					price: VALIDATORS.PRODUCT_PRICE,
+					stockItems: VALIDATORS.PRODUCT_STOCKITEMS,
+					name: VALIDATORS.PRODUCT_NAME
+				};
+			}
+
+			/**
+	   * validate attributes
+	   *
+	   * @param {Object} attr
+	   * @param {Object} options
+	   * @returns {Boolean}
+	   * @private
+	   */
 		}, {
 			key: '_validate',
-			value: function _validate() {
-				return true;
-			}
-		}, {
-			key: 'validate',
-			value: function validate() {}
-		}, {
-			key: 'isMainProduct',
-			value: function isMainProduct() {
-				return this instanceof MainProduct;
-			}
-		}, {
-			key: 'addToCart',
-			value: function addToCart(quantity, options) {
-				var add = this.getCart().addWidthQuantity(this, quantity, options);
-				if (add) {
-					this.trigger('addToCart');
+			value: function _validate(attr, options) {
+
+				var validationErrors = {};
+				var validators = this.validators();
+
+				var hasNotError = _underscore2['default'].every(validators, function (v, key) {
+
+					if (v.indexOf('required') < 0 && !attr[key]) {
+						return true;
+					}
+
+					var errors = _Validator2['default'].checkErrors(attr[key], v, this);
+
+					// errors not found - return true
+					if (!errors) {
+						return true;
+					}
+
+					validationErrors[key] = errors;
+					return false;
+				}, this);
+
+				if (_underscore2['default'].isEmpty(validationErrors)) {
+					this.validationError = null;
+				} else {
+					this.validationError = validationErrors;
+					this.trigger('error');
 				}
-			}
-		}, {
-			key: 'removeFromCart',
-			value: function removeFromCart(quantity, options) {
-				var remove = this.getCart().remove(this.id, quantity, options);
-				if (remove) {
-					this.trigger('removeFromCart');
-				}
-			}
-		}, {
-			key: 'changeQuantity',
-			value: function changeQuantity(quantity, options) {
-				var change = this.getCart().changeQuantity(this.id, quantity, options);
-				if (change) {
-					this.trigger('changeQuantity');
-				}
+
+				return hasNotError;
 			}
 		}, {
 			key: 'set',
 			value: function set(key, val, options) {
-
 				if (!key) {
 					return false;
 				}
 
-				var attrs;
+				var attrs = undefined;
 
 				// Handle both `"key", value` and `{key: value}` -style arguments.
 				if (typeof key === 'object') {
@@ -22795,16 +23219,69 @@
 				this.trigger('change');
 				return this;
 			}
+
+			/**
+	   * get model attribute
+	   *
+	   * @param {String} name
+	   * @returns {*}
+	   */
 		}, {
 			key: 'get',
-			value: function get(key) {
-				return this.attributes[key];
+			value: function get(name) {
+				return this.attributes[name];
 			}
+
+			/**
+	   * get productType
+	   *
+	   * @returns {*}
+	   */
 		}, {
-			key: 'getCartProduct',
-			value: function getCartProduct() {
-				return this.getCart().find({ id: this.id }, true);
+			key: 'getType',
+			value: function getType() {
+				return UTILS.isMainProduct(this) ? 'main' : UTILS.isUpsellProduct(this) ? 'upsell' : false;
 			}
+
+			/**
+	   * item in cart?
+	   * todo need perf
+	   *
+	   * @returns {Boolean}
+	   */
+		}, {
+			key: 'inCart',
+			value: function inCart() {
+				return this.getCart().itemInCart(this.id);
+			}
+
+			/**
+	   * check model is valid?
+	   *
+	   * @returns {Boolean}
+	   */
+		}, {
+			key: 'isValid',
+			value: function isValid() {
+				return this._validate(this.attributes, {});
+			}
+
+			/**
+	   * remove product from cart
+	   * @returns {*}
+	   */
+		}, {
+			key: 'removeFromCart',
+			value: function removeFromCart() {
+				return this.getCart().remove(this.id);
+			}
+
+			/**
+	   * synchronize product with server
+	   */
+		}, {
+			key: 'sync',
+			value: function sync() {}
 		}, {
 			key: 'toJSON',
 			value: function toJSON() {
@@ -22818,37 +23295,82 @@
 	var MainProduct = (function (_Product) {
 		_inherits(MainProduct, _Product);
 
-		//upsellSpecification:{},
-
 		function MainProduct(data, options) {
 			_classCallCheck(this, MainProduct);
 
 			_get(Object.getPrototypeOf(MainProduct.prototype), 'constructor', this).call(this, data, options);
-
-			// массив ID upsellProducts
-			this.upsellSpecification = [];
-			return this;
+			this.upsellSpecification = {};
 		}
 
 		/**
 	  * UpsellProduct class
-	  * Продукт который продается вместе с main (+условия)
+	  */
+
+		/**
+	  * add upsell specification to main product
+	  *
+	  * @param {UpsellProduct} product
+	  * @param {Object} options
+	  * @returns {*}
 	  */
 
 		_createClass(MainProduct, [{
 			key: 'addSpecification',
-			value: function addSpecification(upsellProduct) {
-				if (this.upsellSpecification.indexOf(upsellProduct) < 0) {
-					this.upsellSpecification.push(upsellProduct.id);
+			value: function addSpecification(product, options) {
+
+				if (!UTILS.isUpsellProduct(product)) {
+					return false;
 				}
-				//if (!this.upsellSpecification[upsellProduct.id]) {
-				//	this.upsellSpecification[upsellProduct.id] = upsellProduct;
-				//}
+				if (!_Validator2['default'].validate(product.id, VALIDATORS.PRODUCT_ID)) {
+					return false;
+				}
+
+				this.upsellSpecification[product.id] = product;
+				this.trigger('addSpecification', this.upsellSpecification[product.id]);
+				return this;
 			}
+
+			/**
+	   * remove upsell specification from main product
+	   *
+	   * @param {UpsellProduct} product
+	   * @param {Object} options
+	   * @returns {*}
+	   */
 		}, {
-			key: 'getSpecifications',
-			value: function getSpecifications() {
-				return this.upsellSpecification;
+			key: 'removeSpecification',
+			value: function removeSpecification(product, options) {
+
+				if (!UTILS.isUpsellProduct(product)) {
+					return false;
+				}
+				if (!_Validator2['default'].validate(product.id, VALIDATORS.PRODUCT_ID)) {
+					return false;
+				}
+				if (!this.upsellSpecification[product.id]) {
+					return false;
+				}
+
+				delete this.upsellSpecification[product.id];
+				this.trigger('removeSpecification', product);
+				return this;
+			}
+
+			/**
+	   * return all upsellProducts
+	   * with upsellSpecification is done
+	   *
+	   */
+		}, {
+			key: 'getActiveUpsells',
+			value: function getActiveUpsells() {
+				var _this = this;
+
+				var upsells = this.upsellSpecification;
+				var activeUpsells = _underscore2['default'].compact(_underscore2['default'].map(upsells, function (upsell) {
+					return upsell.checkSpecification(_this);
+				}));
+				return activeUpsells && activeUpsells.length ? activeUpsells : false;
 			}
 		}]);
 
@@ -22867,50 +23389,106 @@
 
 			_get(Object.getPrototypeOf(UpsellProduct.prototype), 'constructor', this).call(this, data, options);
 			this.upsellSpecifications = [];
-			return this;
 		}
 
+		/**
+	  * Один элемент корзины
+	  */
+
+		/**
+	  * get upsellSpecification
+	  *
+	  * @param {MainProduct} mainProduct
+	  * @param {UpsellProduct} upsellProduct
+	  * @param {Object} specificationData
+	  * @returns {UpsellAvailabalitySpecification}
+	  */
+
 		_createClass(UpsellProduct, [{
-			key: 'addSpecification',
-			value: function addSpecification(mainProduct, upsellProduct, options) {
-				if (!this.getSpecification(mainProduct.id, upsellProduct.id)) {
-					var specification = new UpsellAvailabalitySpecification(mainProduct, upsellProduct, options);
-					this.upsellSpecifications.push(specification);
-				}
-			}
-		}, {
 			key: 'getSpecification',
-			value: function getSpecification(mainProductId, upsellProductId) {
+			value: function getSpecification(mainProduct, upsellProduct) {
+				var match = _underscore2['default'].matches({ mainProduct: mainProduct, upsellProduct: upsellProduct });
 				return _underscore2['default'].find(this.upsellSpecifications, function (item) {
-					return item.mainProduct.id === mainProductId && item.upsellProduct.id === upsellProductId;
+					return match(item.toJSON());
 				});
 			}
+
+			/**
+	   * get all upsell specifications
+	   *
+	   * @returns {Array.<T>}
+	   */
 		}, {
 			key: 'getSpecifications',
 			value: function getSpecifications() {
-				return this.upsellSpecifications;
+				return this.upsellSpecifications.slice(0);
 			}
+		}, {
+			key: 'getSpecificationsByMainProduct',
+			value: function getSpecificationsByMainProduct(mainProduct) {
+				var specs = this.upsellSpecifications;
+				return _underscore2['default'].filter(specs, function (item) {
+					return item.attributes.mainProduct.id === mainProduct.id;
+				});
+			}
+
+			/**
+	   * add upsellSpecification
+	   *
+	   * @param {MainProduct} mainProduct
+	   * @param {UpsellProduct} upsellProduct
+	   * @param {Object} specificationData
+	   * @param {Object} options
+	   * @returns {Boolean}
+	   */
+		}, {
+			key: 'addSpecification',
+			value: function addSpecification(mainProduct, upsellProduct, specificationData, options) {
+				if (UTILS.isMainProduct(mainProduct) && UTILS.isUpsellProduct(upsellProduct)) {
+					if (!this.getSpecification(mainProduct, upsellProduct, specificationData)) {
+
+						var specData = _underscore2['default'].extend({}, {
+							mainProduct: mainProduct,
+							upsellProduct: upsellProduct
+						}, specificationData);
+
+						var spec = new UpsellAvailabalitySpecification(specData);
+
+						if (spec.isValid()) {
+							this.upsellSpecifications.push(spec);
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+
+			/**
+	   * remove upsell specification
+	   */
 		}, {
 			key: 'removeSpecification',
 			value: function removeSpecification() {}
 
-			//4) Корзина не должна давать возможности добавлять конкретный UpsellProduct
-			// до момента пока корзина не соответствует условиям
-			// соответствующего UpsellAvailabalitySpecification
+			/**
+	   * check specifications (can add to cart)
+	   *
+	   */
 		}, {
 			key: 'checkSpecifications',
 			value: function checkSpecifications() {
-
-				var specifications = this.getSpecifications();
-				var cart = this.getCart();
-				var totalPrice = cart.getTotalPrice();
-
-				return _underscore2['default'].some(specifications, function (spec) {
-					var mainProduct = cart.get(spec.mainProduct.id);
-					if (!mainProduct) return false;
-					if (totalPrice < spec.totalCartPrice) return false;
-					if (mainProduct.data.quantity < spec.itemsInCart) return false;
-					return true;
+				var specList = this.upsellSpecifications.slice(0);
+				var activeSpec = _underscore2['default'].compact(_underscore2['default'].filter(specList, function (item) {
+					return item.checkAdd();
+				}));
+				return activeSpec && activeSpec.length ? activeSpec : false;
+			}
+		}, {
+			key: 'checkSpecification',
+			value: function checkSpecification(mainProduct) {
+				var specList = this.getSpecificationsByMainProduct(mainProduct);
+				return _underscore2['default'].find(specList, function (item) {
+					return item.check();
 				});
 			}
 		}]);
@@ -22920,6 +23498,216 @@
 
 	exports.UpsellProduct = UpsellProduct;
 
+	var CartItem = (function (_Base4) {
+		_inherits(CartItem, _Base4);
+
+		/**
+	  * @param {Product} product
+	  * @param {Object} data product options (quantity)
+	  * @param {Object} options
+	  */
+
+		function CartItem(product, data, options) {
+			_classCallCheck(this, CartItem);
+
+			_get(Object.getPrototypeOf(CartItem.prototype), 'constructor', this).call(this);
+			options || (options = {});
+
+			if (!UTILS.isProduct(product)) {
+				throw 'invalid product';
+			}
+
+			this.attributes = {};
+			this.validationError = null;
+			this.model = product;
+			this.id = this.model.id;
+			var attrs = _underscore2['default'].extend({}, this.defaults(), data);
+			this.set(attrs, options);
+		}
+
+		/**
+	  * Cart class
+	  */
+
+		/**
+	  * default cart item attributes
+	  *
+	  * @returns {{quantity: Number}}
+	  */
+
+		_createClass(CartItem, [{
+			key: 'defaults',
+			value: function defaults() {
+				return {
+					quantity: 1
+				};
+			}
+
+			/**
+	   * cart options validators
+	   *
+	   * @returns {{}}
+	   */
+		}, {
+			key: 'validators',
+			value: function validators() {
+				return {
+					quantity: VALIDATORS.CART_QUANTITY
+				};
+			}
+
+			/**
+	   * validate attributes
+	   *
+	   * @param {Object} attr
+	   * @param {Object} options
+	   * @returns {Boolean}
+	   * @private
+	   */
+		}, {
+			key: '_validate',
+			value: function _validate(attr, options) {
+
+				options || (options = {});
+				var validationErrors = {};
+				var validators = this.validators();
+
+				var hasNotError = _underscore2['default'].every(validators, function (v, key) {
+
+					if (v.indexOf('required') < 0 && !attr[key]) {
+						return true;
+					}
+
+					var errors = _Validator2['default'].checkErrors(attr[key], v, this);
+
+					// errors not found - return true
+					if (!errors) {
+						return true;
+					}
+
+					validationErrors[key] = errors;
+					return false;
+				}, this);
+
+				// невозможно добавить столько в корзину
+				// лучше бы перенести эту валидацию в validators
+				if (attr.quantity && this.model.get('stockItems') - attr.quantity < 0) {
+					validationErrors['stockItemsError'] = true;
+					hasNotError = false;
+				}
+
+				// еслим хотя бы одно upsellSpecification сработает - я могу добавить продукт
+				if (UTILS.isUpsellProduct(this.model)) {
+					if (!this.model.checkSpecifications()) {
+						validationErrors['upsellSpecificationError'] = true;
+						hasNotError = false;
+					}
+				}
+
+				if (!options.notReplaceErrors) {
+					if (_underscore2['default'].isEmpty(validationErrors)) {
+						this.validationError = null;
+					} else {
+						this.validationError = validationErrors;
+						this.trigger('error');
+					}
+				}
+
+				return hasNotError;
+			}
+
+			/**
+	   * basic set cart item data
+	   *
+	   * @param {Object} data
+	   * @param {Object} options
+	   * @returns {*}
+	   */
+		}, {
+			key: 'set',
+			value: function set(data, options) {
+				options || (options = {});
+				if (!this._validate(data, options)) {
+					return false;
+				}
+
+				// изменяю количество товаров на складе
+				var modelStockItems = this.model.get('stockItems');
+				var newStockItems = modelStockItems - data.quantity;
+				this.model.set('stockItems', newStockItems);
+
+				this.attributes = data;
+				return this;
+			}
+
+			/**
+	   * check item is valid?
+	   *
+	   * @returns {Boolean}
+	   */
+		}, {
+			key: 'isValid',
+			value: function isValid() {
+				return this.validationError === null;
+			}
+		}, {
+			key: 'get',
+			value: function get(name) {
+				return this.attributes[name];
+			}
+
+			/**
+	   * validate will attributes
+	   *
+	   * @param {Object} attr
+	   * @param {Object} options
+	   */
+		}, {
+			key: 'validate',
+			value: function validate(attrs, options) {
+				var attr = _underscore2['default'].extend({}, this.toJSON(), attrs);
+				return this._validate(attr, { notReplaceErrors: true });
+			}
+
+			/**
+	   * clear item from cart
+	   * need restore values
+	   *
+	   */
+		}, {
+			key: 'removeFromCart',
+			value: function removeFromCart() {
+
+				var cart = this.getCart();
+				var index = UTILS.findObjectIndexFromArray(cart.where(), { id: this.id });
+				var modelStockItems = this.model.get('stockItems');
+				var quantity = this.get('quantity');
+				var newStockItems = undefined;
+
+				if (quantity) {
+					newStockItems = modelStockItems + this.get('quantity');
+				}
+
+				if (newStockItems) {
+					this.model.set('stockItems', newStockItems);
+				}
+
+				if (index !== false) {
+					cart.models.splice(index, 1);
+					delete cart.byId[this.id];
+					cart.trigger('remove', this);
+				}
+			}
+		}, {
+			key: 'toJSON',
+			value: function toJSON() {
+				return _underscore2['default'].clone(this.attributes);
+			}
+		}]);
+
+		return CartItem;
+	})(Base);
+
 	var Cart = (function (_Base5) {
 		_inherits(Cart, _Base5);
 
@@ -22927,211 +23715,287 @@
 			_classCallCheck(this, Cart);
 
 			_get(Object.getPrototypeOf(Cart.prototype), 'constructor', this).call(this);
-			// товары в корзине
-			this.items = [];
-			// upsell товары
-			this.upsells = [];
-			this.byId = {};
-
-			this.on('add change remove', this.checkSpecifications, this);
+			this._reset();
+			this.on('add', this.handlerCartCheckSpecifications, this);
+			this.on('change', this.handlerCartCheckSpecifications, this);
+			this.on('remove', this.handlerCartCheckSpecifications, this);
 		}
 
+		/**
+	  * Shop class
+	  */
+
+		/**
+	  * reset shop
+	  *
+	  * @private
+	  */
+
 		_createClass(Cart, [{
-			key: 'find',
-			value: function find(attrs, first) {
-				var attr = attrs || {};
-				var find = first ? _underscore2['default'].find : _underscore2['default'].filter;
-				var match = _underscore2['default'].matches(attr);
-				return find(this.items, function (item) {
-					return match(item.model.attributes);
+			key: '_reset',
+			value: function _reset() {
+				this.byId = {};
+				this.models = [];
+				this.activUpsells = [];
+			}
+
+			/**
+	   * clear cart
+	   *
+	   */
+		}, {
+			key: 'clear',
+			value: function clear() {
+				_underscore2['default'].each(this.where(), function (item) {
+					return item.removeFromCart();
 				});
+				this._reset();
+				this.trigger('clear');
+				return this;
+			}
+
+			/**
+	   * where items from models
+	   *
+	   * @param {Array} models
+	   * @param {Object} attrs
+	   * @param {Boolean} first
+	   * @param {Object} options ({validators:[]}) для проверки особых правил выборки
+	   * @returns {*}
+	   * @private
+	   */
+		}, {
+			key: '_where',
+			value: function _where(models, attrs, first, options) {
+
+				options || (options = {});
+
+				var method = first ? _underscore2['default'].find : _underscore2['default'].filter;
+
+				if (!attrs || _underscore2['default'].isEmpty(attrs)) {
+
+					return options.validators ? method(models, function (item) {
+						return _Validator2['default'].validate(item, options.validators, item);
+					}) : models.slice(0);
+				}
+
+				// CartItem.Product.attributes
+				var matches = _underscore2['default'].matches({ model: { attributes: attrs } });
+
+				return options.validators ? method(models, function (item) {
+					return _Validator2['default'].validate(item, options.validators, item) && matches(item);
+				}) : method(models, matches);
+			}
+
+			/**
+	   * find first model by attributes
+	   *
+	   * @param {Array} models
+	   * @param {Object} attrs
+	   * @returns {*}
+	   * @private
+	   */
+		}, {
+			key: '_findWhere',
+			value: function _findWhere(models, attrs, options) {
+				return this._where(models, attrs, true, options);
 			}
 		}, {
-			key: 'get',
-			value: function get(id) {
-				return this.byId[id];
+			key: 'where',
+			value: function where(attrs, first, options) {
+				return this._where(this.models, attrs, first, options);
 			}
+		}, {
+			key: 'findWhere',
+			value: function findWhere(attrs, options) {
+				return this._findWhere(this.models, attrs, options);
+			}
+
+			/**
+	   * add item to cart
+	   *
+	   * @param {UpsellProduct|MainProduct} model
+	   * @param {Object} data
+	   * @param {Object} options
+	   */
+		}, {
+			key: 'add',
+			value: function add(model, data, options) {
+
+				if (!model) {
+					return false;
+				}
+
+				if (!model.get('stockItems')) {
+					alert('ошибка 1 ');
+					return false;
+				}
+
+				var cartItem = this.get(model);
+
+				if (!cartItem) {
+					cartItem = new CartItem(model, data, options);
+					if (!cartItem.isValid()) {
+						// sonsructor изменяет атрибуты модели
+						// пофиксить это
+						cartItem.removeFromCart();
+						alert('Ошибка 2');
+						return false;
+					}
+
+					this.models.push(cartItem);
+					this.byId[cartItem.id] = cartItem;
+					cartItem.model.trigger('addToCart');
+					this.trigger('add', cartItem);
+					return this;
+				}
+
+				if (!cartItem.validate(data)) {
+					alert('Ошибка 3');
+					return false;
+				}
+
+				cartItem.set(data);
+				this.byId[cartItem.id] = cartItem;
+				cartItem.model.trigger('changeFromCart');
+				this.trigger('change', cartItem);
+				this.trigger('add', cartItem);
+				return this;
+			}
+
+			/**
+	   * add item to cart with quantity
+	   *
+	   * @param {UpsellProduct|MainProduct} model
+	   * @param {Number} quantity
+	   * @param {Object} options
+	   */
+		}, {
+			key: 'addWithQuantity',
+			value: function addWithQuantity(model, quantity, options) {
+				return this.add(model, { quantity: quantity }, options);
+			}
+		}, {
+			key: 'remove',
+			value: function remove(product) {
+				var id = product;
+				if (product instanceof Product) {
+					id = product.id;
+				}
+
+				if (_Validator2['default'].validate(id, VALIDATORS.PRODUCT_ID)) {
+					if (this.itemInCart(id)) {
+						return this.get(id).removeFromCart();
+					}
+					return true;
+				}
+
+				throw 'invalid product id [' + id + ']';
+			}
+
+			/**
+	   * get product by id
+	   *
+	   * @param {Number|MainProduct|UpsellProduct} product
+	   * @returns {MainProduct|UpsellProduct}
+	   */
+		}, {
+			key: 'get',
+			value: function get(product) {
+
+				var id = product;
+				if (product instanceof Product) {
+					id = product.id;
+				}
+
+				if (_Validator2['default'].validate(id, VALIDATORS.PRODUCT_ID)) {
+					return this.byId[id];
+				}
+
+				throw 'invalid product id [' + id + ']';
+			}
+
+			/**
+	   * get total cart price
+	   *
+	   */
 		}, {
 			key: 'getTotalPrice',
 			value: function getTotalPrice() {
-				return _underscore2['default'].reduce(this.find(), function (memo, item) {
-					return memo + item.model.get('price') * item.data.quantity;
-				}, 0) || 0;
+				return _underscore2['default'].reduce(this.where(), function (memo, item) {
+					return memo + item.model.get('price') * item.attributes.quantity;
+				}, 0);
 			}
+
+			/**
+	   * get count items in cart
+	   */
 		}, {
-			key: '_validateChangeProduct',
-			value: function _validateChangeProduct(product, data) {
-
-				if (_underscore2['default'].isEmpty(data)) {
-					return false;
-				}
-
-				for (var n in data) {
-					switch (n) {
-						case 'quantity':
-							if (_Validator2['default'].checkErrors(data[n], ['required', 'integer', 'positive'])) {
-								return false;
-								break;
-							}
-					}
-				}
-
-				// valid true
-				return true;
+			key: 'getItemsInCart',
+			value: function getItemsInCart() {
+				return _underscore2['default'].reduce(this.where(), function (memo, item) {
+					return memo + item.attributes.quantity;
+				}, 0);
 			}
+
+			/**
+	   * check if item in cart
+	   *
+	   * @param {Product} product
+	   */
 		}, {
-			key: '_validateAddProduct',
-			value: function _validateAddProduct(product, data) {
-
-				if (!data.quantity) {
-					alert('Не указан quantity');
-					return false;
-				}
-
-				if (product instanceof UpsellProduct) {
-					//5) UpsellProduct может добавляться только с quantity = 1
-					if (data.quantity !== UPSELL_ADD_COUNT) {
-						alert('upsell product может добавляться только с quantity = ' + UPSELL_ADD_COUNT);
-						return false;
-					}
-					if (!product.checkSpecifications()) {
-						alert('недопустимые upsellSpecifications');
-						return false;
-					}
-				}
-
-				return true;
+			key: 'itemInCart',
+			value: function itemInCart(product) {
+				return this.get(product) !== undefined;
 			}
+
+			/**
+	   * check all upsells
+	   *
+	   */
 		}, {
-			key: 'checkSpecifications',
-			value: function checkSpecifications() {
+			key: 'handlerCartCheckSpecifications',
+			value: function handlerCartCheckSpecifications() {
+				var cartItems = this.where(false, false, { validators: [UTILS.isCartMainProduct] });
+				var activeUpsellSpecificationsGroups = _underscore2['default'].compact(_underscore2['default'].map(cartItems, function (cartItem) {
+					return cartItem.model.getActiveUpsells();
+				}));
+				var activeUpsellSpecifications = _underscore2['default'].compact(_underscore2['default'].reduce(activeUpsellSpecificationsGroups, function (memo, items) {
+					return memo.concat(items);
+				}, []));
+				var activeUpsellSpecificationsIds = _underscore2['default'].pluck(activeUpsellSpecifications, 'id');
 
-				var addUpsells = [];
-				var removeUpsells = [];
-				var upsellProducts = {};
+				if (this.activUpsells.length) {
+					for (var i in this.activUpsells) {
 
-				var canAddUpsellItems = _underscore2['default'].find(this.find(), function (item) {
-					var upsellIds = item.model.getSpecifications();
+						console.log(this.activUpsells[i]);
 
-					for (var i in upsellIds) {
-						// каждый upsellproduct проверяю только по 1 разу
-						if (upsellProducts[upsellIds[i]]) continue;
-						var upsellProduct = this.getShop().get(upsellIds[i]);
-						var upsellInCart = this.get(upsellProduct.id);
-						var specificationsDone = upsellProduct.checkSpecifications();
-
-						console.log('specificationsDone', specificationsDone);
-
-						// если нет в корзине и возможно добавить - добавить
-						if (!upsellInCart && specificationsDone) {
-							addUpsells.push(upsellProduct);
+						if (activeUpsellSpecificationsIds.indexOf(this.activUpsells[i].id) >= 0) {
+							continue;
 						}
-
-						// если есть в корзине и невозможно добавить - удалить
-						if (upsellInCart && !upsellInCart) {
-							removeUpsells.push(upsellProduct);
+						// если upsell продукт более не может находится в корзине (например удален main)
+						if (!this.activUpsells[i].check()) {
+							this.activUpsells[i].get('upsellProduct').removeFromCart();
 						}
-					}
-				}, this);
-
-				// удаляю upsell которые не могут находится в корзине
-				if (removeUpsells.length) {
-					for (var r in removeUpsells) {
-						this.remove(removeUpsells[r].id);
+						console.log(this.activUpsells[i]);
+						this.activUpsells[i].get('upsellProduct').trigger('canNotBuy');
 					}
 				}
 
-				this.trigger('addUpsells', addUpsells);
-			}
-		}, {
-			key: 'add',
-			value: function add(product, data, options) {
-				if (!product) return false;
+				this.activUpsells = activeUpsellSpecifications;
+				_underscore2['default'].each(this.activUpsells, function (item) {
+					return item.get('upsellProduct').trigger('canBuy');
+				});
 
-				data = data || {};
-				options = data || {};
-
-				var cartItem = this.get(product.id);
-
-				if (this._validateAddProduct(product, data)) {
-
-					if (!cartItem) {
-						cartItem = new CartItem(product, data, options);
-						cartItem.model.inCart = true;
-						this.items.push(cartItem);
-					} else {
-						cartItem.data.quantity += data.quantity;
-					}
-
-					alert('Продукт добавлен');
-					this.byId[cartItem.id] = cartItem;
-					this.trigger('add', cartItem);
-					return true;
+				if (this.activUpsells.length) {
+					this.trigger('changeUpsellInformation');
+					this.trigger('showUpsellInformation');
 				}
-
-				return false;
 			}
 
-			//1) Метод добавления продукта в корзину с указанием quantity.
-		}, {
-			key: 'addWidthQuantity',
-			value: function addWidthQuantity(product, quantity, options) {
-				return this.add(product, { quantity: quantity }, options);
-			}
-
-			//3) Метод изменения quantity продукта.
-		}, {
-			key: 'changeQuantity',
-			value: function changeQuantity(productId, quantity, options) {
-
-				var product = this.get(productId);
-
-				if (product) {
-					if (this._validateChangeProduct(product, { quantity: quantity })) {
-						if (product.data.quantity >= quantity) {
-							return this.remove(productId, quantity, options);
-						} else {
-							product.options.quantity = quantity;
-						}
-						this.trigger('change');
-						return true;
-					}
-
-					alert('Ошибка валидации');
-					return false;
-				}
-
-				alert('Продукт не найден');
-				return false;
-			}
-
-			//2) Метод удаления продукта
-		}, {
-			key: 'remove',
-			value: function remove(id, quantity, options) {
-				var product = this.get(id);
-				quantity = quantity || 'all';
-
-				if (quantity > product.data.quantity) {
-					quantity = 'all';
-				}
-
-				if (product) {
-					// todo:optimize
-					var index = UTILS.getObjectIndexFromArray(this.find(), { id: id });
-
-					// удаление продукта
-					// если удаляется полностью
-					// надо так же установить inCart
-					var item = quantity == 'all' || product.data.quantity === quantity ? (product.model.inCart = false, this.items.splice(index, 1)[0]) : (product.data.quantity -= quantity, quantity);
-
-					delete this.byId[product.id];
-					this.trigger('remove', item);
-					return true;
-				}
-
-				return false;
-			}
+			/**
+	   * synchronize cart with server
+	   */
 		}, {
 			key: 'sync',
 			value: function sync() {}
@@ -23143,52 +24007,148 @@
 	var Shop = (function (_Base6) {
 		_inherits(Shop, _Base6);
 
-		function Shop(data) {
+		function Shop(data, options) {
 			_classCallCheck(this, Shop);
 
 			_get(Object.getPrototypeOf(Shop.prototype), 'constructor', this).call(this);
-			this.byId = {};
-			// all shop products
-			this.reset(data.items);
+			this._reset();
 			this.cart = new Cart();
+
+			this.showUpsellPopup = new ShowUpsellPopup();
+			this.reset(data.items, options);
+
+			this.listenTo(this.cart, 'showUpsellInformation', this.showUpsellInformation);
 		}
 
 		_createClass(Shop, [{
+			key: 'showUpsellInformation',
+			value: function showUpsellInformation() {
+				this.getShop().showUpsellPopup.showUpsellInformation(this.getCart().activUpsells);
+			}
+
+			/**
+	   * reset shop
+	   *
+	   * @private
+	   */
+		}, {
+			key: '_reset',
+			value: function _reset() {
+				this.byId = {};
+				this.models = [];
+			}
+
+			/**
+	   * reset all items
+	   *
+	   * @param {Array} models
+	   * @param {Object} options
+	   * @returns {Array}
+	   */
+		}, {
+			key: 'reset',
+			value: function reset(models, options) {
+				var _this2 = this;
+
+				this._reset();
+				var opt = _underscore2['default'].extend({}, options, { silent: true });
+				_underscore2['default'].each(models, function (model) {
+					return _this2.add(model, opt);
+				});
+				this.trigger('reset');
+				return this.models;
+			}
+
+			/**
+	   * add product item to shop
+	   *
+	   * @param {MainProduct|UpsellProduct} model
+	   * @param {Object} options
+	   */
+		}, {
+			key: 'add',
+			value: function add(model, options) {
+				options = options || {};
+
+				var silent = options.silent;
+				var currentModel = this.get(model.id);
+
+				if (!currentModel) {
+					this.byId[model.id] = model;
+					this.models.push(model);
+				} else {
+					currentModel.set(model.attributes, options);
+				}
+
+				if (!silent) {
+					this.trigger('add', this.byId[model.id]);
+				}
+			}
+
+			/**
+	   * remove product from shop
+	   * if product removed from shop -> need remove from cart
+	   *
+	   * @param {Number} id
+	   * @param {Object} options
+	   */
+		}, {
+			key: 'remove',
+			value: function remove(id, options) {}
+
+			/**
+	   * get product by id
+	   *
+	   * @param {Number|MainProduct|UpsellProduct} product
+	   * @param {Object} options
+	   * @returns {MainProduct|UpsellProduct}
+	   */
+		}, {
+			key: 'get',
+			value: function get(product, options) {
+
+				var id = product;
+				if (product instanceof Product) {
+					id = product.id;
+				}
+
+				if (_Validator2['default'].validate(id, VALIDATORS.PRODUCT_ID)) {
+					return this.byId[id];
+				}
+
+				throw 'invalid product id [' + id + ']';
+			}
+
+			/**
+	   * get shop cart
+	   *
+	   * @returns {*}
+	   */
+		}, {
 			key: 'getCart',
 			value: function getCart() {
 				return this.cart;
 			}
 		}, {
-			key: 'reset',
-			value: function reset(items, options) {
-				this.byId = {};
-				this.items = items;
-				for (var i in items) {
-					this.byId[items[i].id] = items[i];
+			key: 'where',
+			value: function where(attrs, first) {
+
+				if (!attrs || _underscore2['default'].isEmpty(attrs)) {
+					return this.models.slice(0);
 				}
+
+				var matches = _underscore2['default'].matches({ attributes: attrs });
+				return first ? _underscore2['default'].first(this.models, matches) : _underscore2['default'].filter(this.models, matches);
 			}
 		}, {
-			key: 'find',
-			value: function find(attrs, first) {
-				var attr = attrs || {};
-				var find = first ? _underscore2['default'].find : _underscore2['default'].filter;
-				var match = _underscore2['default'].matches(attr);
-				return find(this.items, function (item) {
-					return match(item.attributes);
-				});
+			key: 'findWhere',
+			value: function findWhere(attrs) {
+				return this.where(attrs, true);
 			}
-		}, {
-			key: 'get',
-			value: function get(id) {
-				return this.byId[id];
-			}
-		}, {
-			key: 'getMainProducts',
-			value: function getMainProducts() {
-				return _underscore2['default'].filter(this.find(), function (item) {
-					return item instanceof MainProduct;
-				});
-			}
+
+			/**
+	   * synchronize shop products with server
+	   */
 		}, {
 			key: 'sync',
 			value: function sync() {}

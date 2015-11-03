@@ -24,7 +24,8 @@ if (__DEVELOPMENT__) {
 const node = document.getElementById('App');
 
 // количество автосгенерированных продуктов (main)
-const MAIN_PRODUCTS_COUNT = 5000;
+//const MAIN_PRODUCTS_COUNT = 5000;
+const MAIN_PRODUCTS_COUNT = 50;
 
 // возможные mainProducts
 const mainProductsNames = [
@@ -125,10 +126,9 @@ var s = new Date();
 		let productData = genMainProductData(count);
 		productData.name = mainProductsNames[getRandom(0, mainProductsNames.length - 1)];
 
-		// main product object
-		let mainProduct = new MainProduct(productData);
+		//// main product object
+		var mainProduct = new MainProduct(productData);
 
-		// add main product to items
 		ITEMS.push(mainProduct);
 
 		// GENERATE UPSELLS
@@ -146,13 +146,13 @@ var s = new Date();
 			}
 
 			// add link mainProduct -> upsell
-			mainProduct.addSpecification(upsellProduct);
+			mainProduct.addSpecification(upsellProduct, {});
 
 			// add link upsell -> mainproduct
 			upsellProduct.addSpecification(mainProduct, upsellProduct, {
 				itemsInCart: getRandom(2, mainProductsNames.length),
 				totalCartPrice: +(mainProduct.get('price') * getRandom(2, 5).toFixed(2))
-			});
+			}, {});
 
 			upsellProductsCount--;
 		}
