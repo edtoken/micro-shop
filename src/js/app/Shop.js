@@ -34,6 +34,7 @@ const UTILS = {
 		return UTILS.isMainProduct(object.model);
 	},
 
+	//5) UpsellProduct может добавляться только с quantity = 1
 	validateCartQUANTITY: function (value) {
 		if (UTILS.isUpsellProduct(this.model)) {
 			if (value > 1) {
@@ -245,6 +246,9 @@ class UpsellAvailabalitySpecification extends Base {
 
 	/**
 	 * check current spec to ready
+	 * 4) Корзина не должна давать возможности добавлять конкретный UpsellProduct
+	 * до момента пока корзина не соответствует условиям соответствующего UpsellAvailabalitySpecification
+	 *
 	 */
 	checkAdd() {
 
@@ -963,6 +967,7 @@ class Cart extends Base {
 
 	/**
 	 * add item to cart with quantity
+	 * 1) Метод добавления продукта в корзину с указанием quantity.
 	 *
 	 * @param {UpsellProduct|MainProduct} model
 	 * @param {Number} quantity
@@ -972,6 +977,12 @@ class Cart extends Base {
 		return this.add(model, {quantity: quantity}, options);
 	}
 
+	/**
+	 * 2) Метод удаления продукта
+	 *
+	 * @param {Product} product
+	 * @returns {*}
+	 */
 	remove(product) {
 		let id = product;
 		if (product instanceof Product) {
@@ -1001,6 +1012,7 @@ class Cart extends Base {
 
 	/**
 	 * change cart item quantity
+	 * 3) Метод изменения quantity продукта.
 	 *
 	 * @param {Product} model
 	 * @param {Number} quantity
@@ -1084,6 +1096,9 @@ class Cart extends Base {
 		this.activUpsells = activeUpsellSpecifications;
 		_.each(this.activUpsells, item => (item.get('upsellProduct').trigger('canBuy')));
 
+		//6) При достижении Cart требований одного из UpsellAvailabalitySpecification,
+		// должен срабатывать триггер и вызываться подписчик ShowUpsellPopup.showUpsellInformation(upsell), но только
+		//если upsell еще не добавлен в Cart
 		if (this.activUpsells.length) {
 			this.trigger('changeUpsellInformation');
 			this.trigger('showUpsellInformation');
